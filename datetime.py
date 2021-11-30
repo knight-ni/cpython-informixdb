@@ -459,21 +459,26 @@ class timedelta(object):
             daysecondsfrac, daysecondswhole = _math.modf(dayfrac * (24.*3600.))
             assert daysecondswhole == int(daysecondswhole)  # can't overflow
             s = int(daysecondswhole)
-            assert days == long(days)
-            d = long(days)
+            #assert days == long(days)
+            #d = long(days)
+            assert days == int(days)
+            d = int(days)
         else:
             daysecondsfrac = 0.0
             d = days
         assert isinstance(daysecondsfrac, float)
         assert abs(daysecondsfrac) <= 1.0
-        assert isinstance(d, (int, long))
+        #assert isinstance(d, (int, long))
+        assert isinstance(d, (int))
         assert abs(s) <= 24 * 3600
         # days isn't referenced again before redefinition
 
         if isinstance(seconds, float):
             secondsfrac, seconds = _math.modf(seconds)
-            assert seconds == long(seconds)
-            seconds = long(seconds)
+            #assert seconds == long(seconds)
+            #seconds = long(seconds)
+            assert seconds == int(seconds)
+            seconds = int(seconds)
             secondsfrac += daysecondsfrac
             assert abs(secondsfrac) <= 2.0
         else:
@@ -482,7 +487,8 @@ class timedelta(object):
         assert isinstance(secondsfrac, float)
         assert abs(secondsfrac) <= 2.0
 
-        assert isinstance(seconds, (int, long))
+        #assert isinstance(seconds, (int, long))
+        assert isinstance(seconds, (int))
         days, seconds = divmod(seconds, 24*3600)
         d += days
         s += int(seconds)    # can't overflow
@@ -499,11 +505,14 @@ class timedelta(object):
             microseconds = round(microseconds)
             seconds, microseconds = divmod(microseconds, 1e6)
             assert microseconds == int(microseconds)
-            assert seconds == long(seconds)
-            days, seconds = divmod(seconds, 24.*3600.)
-            assert days == long(days)
+            #assert seconds == long(seconds)
             assert seconds == int(seconds)
-            d += long(days)
+            days, seconds = divmod(seconds, 24.*3600.)
+            #assert days == long(days)
+            assert days == int(days)
+            assert seconds == int(seconds)
+            #d += long(days)
+            d += int(days)
             s += int(seconds)   # can't overflow
             assert isinstance(s, int)
             assert abs(s) <= 3 * 24 * 3600
@@ -530,7 +539,8 @@ class timedelta(object):
         days, s = divmod(s, 24*3600)
         d += days
 
-        assert isinstance(d, (int, long))
+        #assert isinstance(d, (int, long))
+        assert isinstance(d, (int))
         assert isinstance(s, int) and 0 <= s < 24*3600
         assert isinstance(us, int) and 0 <= us < 1000000
 
@@ -607,7 +617,8 @@ class timedelta(object):
             return self
 
     def __mul__(self, other):
-        if isinstance(other, (int, long)):
+        #if isinstance(other, (int, long)):
+        if isinstance(other, (int)):
             return self.__class__(self.__days * other,
                                   self.__seconds * other,
                                   self.__microseconds * other)
@@ -616,8 +627,10 @@ class timedelta(object):
     __rmul__ = __mul__
 
     def __div__(self, other):
-        if isinstance(other, (int, long)):
-            usec = ((self.__days * (24*3600L) + self.__seconds) * 1000000 +
+        #if isinstance(other, (int, long)):
+        if isinstance(other, (int)):
+            #usec = ((self.__days * (24*3600L) + self.__seconds) * 1000000 +
+            usec = ((self.__days * (24*3600) + self.__seconds) * 1000000 +
                     self.__microseconds)
             return self.__class__(0, 0, usec // other)
         return NotImplemented
@@ -669,7 +682,7 @@ class timedelta(object):
     def __hash__(self):
         return hash(self.__getstate())
 
-    def __nonzero__(self):
+    def __bool__(self):
         return (self.__days != 0 or
                 self.__seconds != 0 or
                 self.__microseconds != 0)
@@ -965,10 +978,12 @@ class date(object):
         return ("%c%c%c%c" % (yhi, ylo, self.__month, self.__day), )
 
     def __setstate(self, t):
-        assert isinstance(t, tuple) and len(t) == 1, `t`
+        #assert isinstance(t, tuple) and len(t) == 1, `t`
+        assert isinstance(t, tuple) and len(t) == 1, repr(t)
         string = t[0]
         assert len(string) == 4
-        yhi, ylo, self.__month, self.__day = map(ord, string)
+        #yhi, ylo, self.__month, self.__day = map(ord, string)
+        yhi, ylo, self.__month, self.__day = list(map(ord, string))
         self.__year = yhi * 256 + ylo
 
     def __reduce__(self):
@@ -1308,7 +1323,7 @@ class time(object):
         offset = _check_utc_offset("dst", offset)
         return offset
 
-    def __nonzero__(self):
+    def __bool__(self):
         if self.second or self.microsecond:
             return 1
         offset = self._utcoffset() or 0
@@ -1334,7 +1349,7 @@ class time(object):
         string = state[0]
         assert len(string) == 6
         self.__hour, self.__minute, self.__second, us1, us2, us3 = \
-                                                            map(ord, string)
+                                                            list(map(ord, string))
         self.__microsecond = (((us1 << 8) | us2) << 8) | us3
         if len(state) == 1:
             self._tzinfo = None
@@ -1740,7 +1755,7 @@ class datetime(date):
         if myoff == otoff:
             return base
         if myoff is None or otoff is None:
-            raise TypeError, "cannot mix naive and timezone-aware time"
+            raise TypeError("cannot mix naive and timezone-aware time")
         return base + timedelta(minutes = otoff-myoff)
 
     def __hash__(self):
@@ -1773,7 +1788,7 @@ class datetime(date):
         string = state[0]
         assert len(string) == 10
         (yhi, ylo, self.__month, self.__day, self.__hour,
-         self.__minute, self.__second, us1, us2, us3) = map(ord, string)
+         self.__minute, self.__second, us1, us2, us3) = list(map(ord, string))
         self.__year = yhi * 256 + ylo
         self.__microsecond = (((us1 << 8) | us2) << 8) | us3
         if len(state) == 1:

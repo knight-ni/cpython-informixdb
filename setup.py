@@ -107,14 +107,14 @@ class build_ext(_build_ext):
           esql_config.append(token)
         ret = cout.close()
         if ret != None:
-          raise DistutilsSetupError, """\
+          raise DistutilsSetupError("""\
 Can't run esql. Please make sure that:
 * You have the Informix CSDK installed,
 * INFORMIXDIR is set to where Informix CSDK is installed, and
 * esql is in your PATH.
 
 See the README for build requirements.
-"""
+""")
 
         if get_platform()=="win32":
           for arg in esql_config:
@@ -158,7 +158,7 @@ See the README for build requirements.
                 dir = os.path.dirname(file)
                 f = os.path.basename(file)
                 cmd = ' '.join(self.esql_parts + [ '-e', f ])
-                print cmd
+                print(cmd)
 
                 curdir = os.getcwd()
                 os.chdir(dir)
