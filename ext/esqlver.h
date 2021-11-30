@@ -1,0 +1,2 @@
+#define DRIVER_NAME "INFORMIX-ESQL"
+#define DRIVER_VERSION "Unknown"

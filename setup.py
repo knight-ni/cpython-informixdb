@@ -22,7 +22,7 @@ class build_ext(_build_ext):
         ('esql-threadlib=', None,
         '[ESQL/C] Thread library to use with ESQL/C'),
         ('esql-informixdir=', None,
-        '[ESQL/C] Informixdir to use if $INFORMIXDIR is not set'),
+        '[ESQL/C] Informixdir to use if $GBASEDBTDIR is not set'),
         ('esql-static', None,
         '[ESQL/C] statically link against ESQL/C libraries')
         ]
@@ -34,20 +34,20 @@ class build_ext(_build_ext):
 
         self.esql_informixdir = None
         self.esql_threadlib = None
-        self.esql_static = 1 # link staticly by default
+        self.esql_static = 0 # link staticly by default
         self.esql_parts = []
 
     def finalize_options(self):
         _build_ext.finalize_options(self)
 
         if not self.esql_informixdir:
-            self.esql_informixdir = os.getenv("INFORMIXDIR")
+            self.esql_informixdir = os.getenv("GBASEDBTDIR")
         if not self.esql_informixdir:
           if get_platform()=="win32":
             self.esql_informixdir = "C:\\Program Files\\Informix\\Client-SDK"
           else:
             self.esql_informixdir = "/usr/informix"
-        os.environ['INFORMIXDIR'] = self.esql_informixdir
+        os.environ['GBASEDBTDIR'] = self.esql_informixdir
 
         self.esql_parts.append(os.path.join(self.esql_informixdir,'bin','esql'))
         if get_platform()=="win32":
@@ -81,6 +81,7 @@ class build_ext(_build_ext):
               # Assume ESQL 9.xx for any IBM branded CSDK.
               driver_name = "IBM Informix-ESQL"
               esqlversion = 960
+        esqlversion = 1210
         if esqlversion==None:
           esqlversion = 850
         if esqlversion >= 900:
@@ -110,7 +111,7 @@ class build_ext(_build_ext):
           raise DistutilsSetupError("""\
 Can't run esql. Please make sure that:
 * You have the Informix CSDK installed,
-* INFORMIXDIR is set to where Informix CSDK is installed, and
+* GBASEDBTDIR is set to where Informix CSDK is installed, and
 * esql is in your PATH.
 
 See the README for build requirements.

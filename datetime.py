@@ -530,7 +530,7 @@ class timedelta(object):
         assert abs(microseconds) < 3.1e6
 
         # Just a little bit of carrying possible for microseconds and seconds.
-        assert isinstance(microseconds, float)
+        #assert isinstance(microseconds, float)
         assert int(microseconds) == microseconds
         us = int(microseconds)
         seconds, us = divmod(us, 1000000)
