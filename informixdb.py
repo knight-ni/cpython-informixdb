@@ -88,7 +88,7 @@ and divided by scalar factors.
         try:
           date2 = datetime.date(y+y2,m2+1,d)
         except ValueError:
-          raise ValueError, "month arithmetic yielded an invalid date."
+          raise ValueError("month arithmetic yielded an invalid date.")
         # apply the resulting timedelta to the operand
         return other + (date2 - otherdate)
       else: return NotImplemented
@@ -99,11 +99,13 @@ and divided by scalar factors.
       if self._months < 0: return -self
       else: return self
   def __mul__(self, other):
-      if isinstance(other, (int,long,float)):
+      #if isinstance(other, (int,long,float)):
+      if isinstance(other, (int,float)):
         return self.__class__(0, int(self._months*other))
       else: return NotImplemented
   def __div__(self, other):
-      if isinstance(other, (int,long,float)):
+      #if isinstance(other, (int,long,float)):
+      if isinstance(other, (int,float)):
         return self.__class__(0, int(self._months/other))
       else: return NotImplemented
   __radd__ = __add__
@@ -153,12 +155,12 @@ from _informixdb import Cursor as _Cursor, Connection as _Connection
 class Cursor(_Cursor):
   __doc__ = _Cursor.__doc__
   def __new__(self, *args, **kwargs):
-    raise InterfaceError, "Use Connection.cursor() to instantiate a cursor."
+    raise InterfaceError("Use Connection.cursor() to instantiate a cursor.")
 del _Cursor
 class Connection(_Connection):
   __doc__ = _Connection.__doc__
   def __new__(self, *args, **kwargs):
-    raise InterfaceError, "Use connect() to instantiate a connection."
+    raise InterfaceError("Use connect() to instantiate a connection.")
 del _Connection
 try:
   # Same for Sblobs if we have support for them in _informixdb
@@ -166,6 +168,6 @@ try:
   class Sblob(_Sblob):
     __doc__ = _Sblob.__doc__
     def __new__(self, *args, **kwargs):
-      raise InterfaceError, "Use Connection.Sblob() to instantiate an Sblob."
+      raise InterfaceError("Use Connection.Sblob() to instantiate an Sblob.")
   del _Sblob
 except: pass
