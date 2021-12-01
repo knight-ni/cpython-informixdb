@@ -223,8 +223,8 @@ particular feature (e.g. VARCHARs or BYTE/TEXT types on Informix SE).");
  * Evaluates to 1 to indicate that an exception was raised, or to 0
  * otherwise
  */
-          //(SQLSTATE[0] != '0' || (SQLSTATE[1] != '0' && SQLSTATE[1] != 2)) && 
 #define is_dberror(conn, cursor, action) \
+          ((SQLSTATE[0] != '0') || (SQLSTATE[1] != '0' && SQLSTATE[1] != 2)) && \
           error_handle(conn, cursor, dberror_type(NULL), dberror_value(action))
 
 #define clear_messages(obj) \
@@ -1039,7 +1039,6 @@ static char* getConnectionName(void)
   dict = PyThreadState_GetDict();
   conn = PyDict_GetItem(dict, ifxdbConnKey);
   if (!conn) return NULL;
-
   name = PyString_AS_STRING(conn);
   return name;
 }
@@ -3172,11 +3171,10 @@ static int Connection_init(Connection *self, PyObject *args, PyObject* kwds)
 
   static char* kwd_list[] = { "dsn", "user", "password", "autocommit", 0 };
 
-  if (!PyArg_ParseTupleAndKeywords(args, kwds, "s|OOi", kwd_list,
-            &connectionString, &pyDbUser, &pyDbPass, &autocommit)) {
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, "s|OOi", kwd_list, &connectionString, &pyDbUser, &pyDbPass, &autocommit)) {
     return -1;
   }
-
+  
   if (pyDbUser && pyDbUser != Py_None) {
     dbUser = PyUnicode_AsUTF8(pyDbUser);
     if (!dbUser) return -1;
@@ -3226,7 +3224,6 @@ static int Connection_init(Connection *self, PyObject *args, PyObject* kwds)
   }
 
   setConnectionName(self->name);
-
   EXEC SQL
     SELECT dbinfo("version","server-type"),
            dbinfo("version","major"),
@@ -3308,10 +3305,26 @@ static PyObject* DatabaseError_init(PyObject* self, PyObject* args, PyObject* kw
   long int sqlcode;
   PyObject *sqlerrm;
 
-  if (!PyArg_ParseTupleAndKeywords(args, kwds, "OSlO!O", kwdnames, &self,
-                         &action, &sqlcode, &PyList_Type, &diags, &sqlerrm)) {
+/*
+  printf("HERE");
+  PyObject* objectsRepresentation = PyObject_Repr(args);
+  const char* s = PyUnicode_AsUTF8(objectsRepresentation);
+  printf("%s\n",s);
+  objectsRepresentation = PyObject_Repr(kwds);
+  s = PyUnicode_AsUTF8(objectsRepresentation);
+  printf("%s\n",s);
+*/
+  //if (!PyArg_ParseTupleAndKeywords(args, kwds, "OSlO!O", kwdnames, &self, &action, &sqlcode, &PyList_Type, &diags, &sqlerrm)) {
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, "OOlO!O", kwdnames, &self, &action, &sqlcode, &PyList_Type, &diags, &sqlerrm)) {
+    printf("failed parse\n");
     return NULL;
   }
+
+/*
+  PyObject* objectsRepresentation = PyObject_Repr(sqlerrm);
+  const char* s = PyUnicode_AsUTF8(objectsRepresentation);
+  printf("%s\n",s);
+*/
 
   if (PyObject_SetAttrString(self, "action", action)) {
     return NULL;
@@ -3323,8 +3336,7 @@ static PyObject* DatabaseError_init(PyObject* self, PyObject* args, PyObject* kw
 
   if (PyObject_SetAttrString(self, "diagnostics", diags)) {
     return NULL;
-  }
-
+  } 
   if (PyObject_SetAttrString(self, "sqlerrm", sqlerrm)) {
     return NULL;
   }
@@ -3347,26 +3359,37 @@ static PyObject* DatabaseError_str(PyObject* self, PyObject* args)
   a = Py_BuildValue("(NN)", sqlcode, action);
   f = PyUnicode_FromString("SQLCODE %d in %s: \n");
   str = PyUnicode_Format(f, a);
+
   Py_DECREF(f);
   Py_DECREF(a);
-
   f = PyUnicode_FromString("%s: %s\n");
 
   for (i = 0; i < (int)PyList_Size(diags); ++i) {
     PyObject* d = PyList_GetItem(diags, i);
     a = Py_BuildValue("(OO)", PyDict_GetItemString(d, "sqlstate"),
                               PyDict_GetItemString(d, "message"));
-    PyBytes_ConcatAndDel(&str, PyUnicode_Format(f, a));
+
+    //PyBytes_ConcatAndDel(&str, PyUnicode_Format(f, a));
+    str = PyUnicode_Concat(str, PyUnicode_Format(f, a));
     Py_DECREF(a);
   }
 
   Py_DECREF(f);
 
   if (PyObject_IsTrue(sqlerrm)) {
-    PyBytes_ConcatAndDel(&str, PyUnicode_FromString("SQLERRM = "));
-    PyBytes_Concat(&str, sqlerrm);
-    PyBytes_ConcatAndDel(&str, PyUnicode_FromString("\n"));
+    str = PyUnicode_Concat(str, PyUnicode_FromString("SQLERRM = "));
+    //PyBytes_ConcatAndDel(&str, PyUnicode_FromString("SQLERRM = "));
+    str = PyUnicode_Concat(str, sqlerrm);
+    //PyBytes_Concat(&str, sqlerrm);
+    str = PyUnicode_Concat(str, PyUnicode_FromString("\n"));
+    //PyBytes_ConcatAndDel(&str, PyUnicode_FromString("\n"));
   }
+
+/*
+  PyObject* objectsRepresentation = PyObject_Repr(str);
+  const char* s = PyUnicode_AsUTF8(objectsRepresentation);
+  printf("%s\n",s);
+*/
 
   Py_DECREF(action);
   Py_DECREF(sqlcode);
@@ -3385,7 +3408,6 @@ static PyMethodDef DatabaseError_methods[] = {
 static void setupdb_error(PyObject* exc)
 {
   PyMethodDef* meth;
-
   for (meth = DatabaseError_methods; meth->ml_name != NULL; ++meth) {
     PyObject *func = PyCFunction_New(meth, NULL);
     PyObject *method = PyMethod_New(func, exc);
@@ -3552,7 +3574,13 @@ static int error_handle(Connection *connection, Cursor *cursor,
     } else if (connection) {
       PyList_Append(connection->messages, msg);
     }
+/*
+    PyObject* repr = PyObject_Repr(msg);
+    PyObject* str = PyUnicode_AsEncodedString(repr, "utf-8", "~E~");
+    const char *bytes = PyBytes_AS_STRING(str);
 
+    printf("REPR: %s\n", bytes);
+*/
     if (type != ExcWarning) {
       PyErr_SetObject(type, value);
       Py_DECREF(msg);
@@ -4266,8 +4294,22 @@ $endif;
 PyDoc_STRVAR(_informixdb_doc,
 "DB-API 2.0 compliant interface for Informix databases.\n");
 
-//void init_informixdb(void)
-void PyInit__informixdb(void)
+#if PY_MAJOR_VERSION >= 3
+   static struct PyModuleDef mydef = {
+      PyModuleDef_HEAD_INIT,
+      "_informixdb",
+      _informixdb_doc,
+      -1,
+      globalMethods
+   };
+#endif
+
+PyMODINIT_FUNC
+#if PY_MAJOR_VERSION >= 3
+PyInit__informixdb()
+#else
+init_informixdb(void)
+#endif
 {
   int threadsafety = 0;
 
@@ -4279,14 +4321,6 @@ void PyInit__informixdb(void)
                                  "smallfloat", "decimal", "money", NULL };
   static char* dbtp_datetime[] = { "date", "datetime", NULL };
   static char* dbtp_rowid[] = { "serial", "serial8", NULL };
-
-  static PyModuleDef mydef = {
-     PyModuleDef_HEAD_INIT,
-     "_informixdb",
-     _informixdb_doc,
-     -1,
-     globalMethods
-  };
 
   PyObject *m = PyModule_Create(&mydef);
   PyObject *module;
@@ -4301,9 +4335,9 @@ void PyInit__informixdb(void)
             Py_DECREF(d); \
             PyModule_AddObject(m, #name, Exc##name); \
           } while(0);
-  defException(Warning, PyExc_BaseException);
-  setupdb_error(ExcWarning);
-  defException(Error, PyExc_BaseException);
+  defException(Warning, PyExc_Exception);
+  //setupdb_error(ExcWarning);
+  defException(Error, PyExc_Exception);
   defException(InterfaceError, ExcError);
   defException(DatabaseError, ExcError);
   setupdb_error(ExcDatabaseError);
@@ -4445,4 +4479,5 @@ $endif;
      is handled */
   sqlsignal(-1, (void(*)(void))NULL, 0);
 #endif
+  return m;
 }
