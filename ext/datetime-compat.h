@@ -55,7 +55,7 @@ static int CompatPyDateTime_Get(PyObject *datetime, char* attr)
   PyObject *o = PyObject_GetAttrString(datetime, attr);
   if (!o)
     return 0;
-  i = PyInt_AsLong(o);
+  i = PyLong_AsLong(o);
   Py_DECREF(o);
   return i;
 }

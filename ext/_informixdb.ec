@@ -67,6 +67,7 @@ typedef int Py_ssize_t;
 #include <locator.h>
 #include <datetime.h>
 
+
 $ifdef HAVE_ESQL9;
 #define SBLOB_TYPE_BLOB 0
 #define SBLOB_TYPE_CLOB 1
@@ -76,18 +77,10 @@ typedef long int4;
 typedef loc_t ifx_loc_t;
 $endif;
 
-#if HAVE_C_DATETIME == 1
-  /* Python and Informix both have a datetime.h, the Informix header is
-   * included above because it comes first in the include path. We manually
-   * include the Python one here (needs a few preprocessor tricks...)
-   */
-#   define DATETIME_INCLUDE datetime.h
-#   define HACKYDT_INC2(f) #f
-#   define HACKYDT_INC(f) HACKYDT_INC2(f)
-#   include HACKYDT_INC(PYTHON_INCLUDE/DATETIME_INCLUDE)
-#else
-#   include "datetime-compat.h" /* emulate datetime API on older versions */
-#endif
+#define DATETIME_INCLUDE datetime.h
+#define HACKYDT_INC2(f) #f
+#define HACKYDT_INC(f) HACKYDT_INC2(f)
+#include HACKYDT_INC(PYTHON_INCLUDE/DATETIME_INCLUDE)
 
 #ifdef IFX_THREAD
 #ifndef WITH_THREAD
@@ -1869,7 +1862,6 @@ $endif;
       count = rtypalign(count, var->sqltype) + var->sqllen;
     }
   }
-
   /* now we know how big the buffer needs to be, allocate it. */
   bufp = cur->outputBuffer = malloc(count);
 
@@ -2147,7 +2139,6 @@ static PyObject *Cursor_execute(Cursor *self, PyObject *args, PyObject *kwds)
         self->rowcount = -1;
         break;
     }
-
     return Py_BuildValue("i", self->rowcount); /* number of row */
   }
 }
@@ -2893,6 +2884,7 @@ static PyObject* Cursor_iternext(Cursor *self)
 
 static PyObject *Cursor_fetchone(Cursor *self)
 {
+  printf("asdfasdf");
   struct sqlda *tdaOut = self->daOut;
   int i;
   void (*oldsighandler)(int);
@@ -3261,7 +3253,7 @@ static int Connection_init(Connection *self, PyObject *args, PyObject* kwds)
   }
   self->driver_name = PyUnicode_FromString(DRIVER_NAME);
   self->driver_version = PyUnicode_FromString(DRIVER_VERSION);
-
+  //PyDateTime_IMPORT;
   return 0;
 }
 
@@ -4459,7 +4451,10 @@ $endif;
   Py_INCREF(DataRowType);
 
   PyDateTime_IMPORT;
-
+  if (PyDateTimeAPI == NULL){
+     PyErr_SetString(PyExc_ImportError, "can't find datetime.datetimeCAPI";
+      return NULL;
+  }
   DecimalType = NULL;
   module = PyImport_ImportModule("decimal");
   if (module) {
