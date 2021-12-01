@@ -22,7 +22,7 @@ class build_ext(_build_ext):
         ('esql-threadlib=', None,
         '[ESQL/C] Thread library to use with ESQL/C'),
         ('esql-informixdir=', None,
-        '[ESQL/C] Informixdir to use if $GBASEDBTDIR is not set'),
+        '[ESQL/C] Informixdir to use if $INFORMIXDIR is not set'),
         ('esql-static', None,
         '[ESQL/C] statically link against ESQL/C libraries')
         ]
@@ -41,13 +41,13 @@ class build_ext(_build_ext):
         _build_ext.finalize_options(self)
 
         if not self.esql_informixdir:
-            self.esql_informixdir = os.getenv("GBASEDBTDIR")
+            self.esql_informixdir = os.getenv("INFORMIXDIR")
         if not self.esql_informixdir:
           if get_platform()=="win32":
             self.esql_informixdir = "C:\\Program Files\\Informix\\Client-SDK"
           else:
             self.esql_informixdir = "/usr/informix"
-        os.environ['GBASEDBTDIR'] = self.esql_informixdir
+        os.environ['INFORMIXDIR'] = self.esql_informixdir
 
         self.esql_parts.append(os.path.join(self.esql_informixdir,'bin','esql'))
         if get_platform()=="win32":
@@ -111,7 +111,7 @@ class build_ext(_build_ext):
           raise DistutilsSetupError("""\
 Can't run esql. Please make sure that:
 * You have the Informix CSDK installed,
-* GBASEDBTDIR is set to where Informix CSDK is installed, and
+* INFORMIXDIR is set to where Informix CSDK is installed, and
 * esql is in your PATH.
 
 See the README for build requirements.
@@ -230,14 +230,12 @@ if sys.version < '2.2.3':
     DistributionMetadata.classifiers = None
     DistributionMetadata.download_url = None
 
-setup (name = 'InformixDB',
-       version = '2.5',
-       description = 'InformixDB v2.5',
+setup (name = 'InformixDB-Knight',
+       version = '3',
+       description = 'InformixDB v3.0',
        long_description = \
-         "InformixDB is a DB-API 2.0 compliant interface for IBM Informix\n"
+         "InformixDB is a DB-API 2.0 compliant interface for IBM Informix Work For Python3\n"
          "databases.",
-       maintainer = "Carsten Haese",
-       maintainer_email = "chaese@users.sourceforge.net",
        url = "http://sourceforge.net/projects/informixdb",
        license = "BSD License",
        platforms = ["POSIX", "Microsoft Windows 95/98/NT/2000/XP"],
