@@ -224,8 +224,9 @@ particular feature (e.g. VARCHARs or BYTE/TEXT types on Informix SE).");
  * otherwise
  */
 #define is_dberror(conn, cursor, action) \
-          ((SQLSTATE[0] != '0') || (SQLSTATE[1] != '0' && SQLSTATE[1] != 2)) && \
-          error_handle(conn, cursor, dberror_type(NULL), dberror_value(action))
+          (SQLSTATE[0] != '0' || (SQLSTATE[1] != '0' && SQLSTATE[1] != 2)) ? \
+          error_handle(conn, cursor, dberror_type(NULL), dberror_value(action)): \
+          (SQLSTATE[0] != '0' || (SQLSTATE[1] != '0' && SQLSTATE[1] != 2))
 
 #define clear_messages(obj) \
           PySequence_DelSlice(obj->messages, 0, \
@@ -4336,7 +4337,7 @@ init_informixdb(void)
             PyModule_AddObject(m, #name, Exc##name); \
           } while(0);
   defException(Warning, PyExc_Exception);
-  //setupdb_error(ExcWarning);
+  setupdb_error(ExcWarning);
   defException(Error, PyExc_Exception);
   defException(InterfaceError, ExcError);
   defException(DatabaseError, ExcError);
