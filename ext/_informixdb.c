@@ -5260,7 +5260,7 @@ init_informixdb(void)
   PyDateTime_IMPORT;
   if (PyDateTimeAPI == NULL){
      PyErr_SetString(PyExc_ImportError, "can't find datetime.datetimeCAPI");
-      return NULL;
+     return NULL;
   }
   DecimalType = NULL;
   module = PyImport_ImportModule("decimal");

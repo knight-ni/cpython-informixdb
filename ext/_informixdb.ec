@@ -4452,8 +4452,8 @@ $endif;
 
   PyDateTime_IMPORT;
   if (PyDateTimeAPI == NULL){
-     PyErr_SetString(PyExc_ImportError, "can't find datetime.datetimeCAPI";
-      return NULL;
+     PyErr_SetString(PyExc_ImportError, "can't find datetime.datetimeCAPI");
+     return NULL;
   }
   DecimalType = NULL;
   module = PyImport_ImportModule("decimal");
