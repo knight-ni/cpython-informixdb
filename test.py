@@ -43,8 +43,16 @@ def test():
     stmt_list.append(',udatetime')
     stmt_list.append(',ufloat')
     stmt_list.append(',udecimal')
+    stmt_list.append(',utext')
+    stmt_list.append(',uclob')
+    stmt_list.append(',ubyte')
+    stmt_list.append(',ublob')
     stmt_list.append(')')
     stmt_list.append(' values(?')
+    stmt_list.append(',?')
+    stmt_list.append(',?')
+    stmt_list.append(',?')
+    stmt_list.append(',?')
     stmt_list.append(',?')
     stmt_list.append(',?')
     stmt_list.append(',?')
@@ -73,6 +81,26 @@ def test():
 
     udecimal = decimal.Decimal('123123.412')
     params.append(udecimal)
+
+    with open('/etc/passwd', 'rb') as f:
+        utext = f.read()
+    params.append(utext)
+
+    uclob = conn.Sblob(1)   # DEFINED IN SOURCE FILE
+    with open('/etc/services', 'r') as f:
+        uclob.write(f.read())
+    uclob.close()
+    params.append(uclob)
+
+    with open('./cat.jpg', 'rb') as f:
+        ubyte = f.read()
+    params.append(ubyte)
+
+    ublob = conn.Sblob(0)    # DEFINED IN SOURCE FILE
+    with open('./cat.jpg', 'rb') as f:
+        ublob.write(f.read())
+    ublob.close()
+    params.append(ublob)
 
     cursor.prepare(stmt)
     ret = cursor.execute(None,params)

@@ -231,7 +231,7 @@ if sys.version < '2.2.3':
     DistributionMetadata.download_url = None
 
 setup (name = 'InformixDB-Knight',
-       version = '3.0.0.2',
+       version = '3.0.0.3',
        description = 'InformixDB v3.0',
        long_description = \
          "InformixDB is a DB-API 2.0 compliant interface for IBM Informix Work For Python3\n"
