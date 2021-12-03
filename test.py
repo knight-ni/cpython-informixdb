@@ -37,8 +37,10 @@ def test():
 
     stmt_list = ['insert into ifxdbtest(']
     stmt_list.append('uid')
+    stmt_list.append(',uname')
     stmt_list.append(')')
     stmt_list.append(' values(?')
+    stmt_list.append(',?')
     stmt_list.append(')')
     stmt = ''.join(stmt_list)
 
@@ -46,12 +48,16 @@ def test():
     params = []
    
     uid = int(666)
-    print(type(uid))
     params.append(uid)
+
+    uname = '卡布达'
+    params.append(uname)
+
     cursor.prepare(stmt)
     ret = cursor.execute(None,params)
     print(ret)
     conn.close()
+    sys.exit(0)
 
 if __name__ == '__main__':
     sys.stdout = io.TextIOWrapper(sys.stdout.detach(), encoding='utf-8')

@@ -2666,7 +2666,6 @@ $ifdef HAVE_ESQL9;
         }
 $endif;
         if (da->sqlvar[i].sqldata != NULL){
-          printf("%lu\n",sizeof(da->sqlvar[i].sqldata));
           free(da->sqlvar[i].sqldata);
         }
       }
