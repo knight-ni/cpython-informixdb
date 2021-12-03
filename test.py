@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import informixdb
 import io
 import os
 import sys
@@ -120,9 +119,39 @@ def test():
     ret = cursor.fetchall()
 
     print('')
-    for col in ret:
-        print(col[0])
- 
+
+    lobbuf_size=int(4096)
+    for row in ret:
+        for idx,col in enumerate(row):
+            type = cursor.description[idx][1]
+            if(type == 'text'):
+                with open('./text_passwd', 'wb') as f:
+                    f.write(col)
+            elif (type == 'byte'):
+                with open('./byte_cat.jpg', 'wb') as f:
+                    f.write(col)
+            elif(cursor.description[idx][1] == 'fixed udt \'clob\''):
+                col.open()
+                with open('./clob_services', 'wb') as f:
+                    while (1):
+                        buf=col.read(lobbuf_size)
+                        if(buf):
+                            f.write(buf)
+                        else:
+                            break
+                col.close()
+            elif (cursor.description[idx][1] == 'fixed udt \'blob\''):
+                col.open()
+                with open('./blob_cat.jpg', 'wb') as f:
+                    while (1):
+                        buf=col.read(lobbuf_size)
+                        if(buf):
+                            f.write(buf)
+                        else:
+                            break
+                col.close()
+            else:
+                print(col)
     
     conn.close()
     sys.exit(0)

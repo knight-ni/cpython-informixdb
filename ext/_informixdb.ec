@@ -4038,7 +4038,8 @@ static PyObject *Sblob_read(Sblob *self, PyObject *args, PyObject *kwargs)
     PyMem_Free(buf);
     ret_on_dberror(self->conn, NULL, "ifx_lo_read");
   }
-  py_result = PyUnicode_FromStringAndSize(buf, result);
+  //py_result = PyUnicode_FromStringAndSize(buf, result);
+  py_result = PyBytes_FromStringAndSize(buf, result);
   PyMem_Free(buf);
   return py_result;
 }

@@ -4825,7 +4825,8 @@ static PyObject *Sblob_read(Sblob *self, PyObject *args, PyObject *kwargs)
     PyMem_Free(buf);
     ret_on_dberror(self->conn, NULL, "ifx_lo_read");
   }
-  py_result = PyUnicode_FromStringAndSize(buf, result);
+  //py_result = PyUnicode_FromStringAndSize(buf, result);
+  py_result = PyBytes_FromStringAndSize(buf, result);
   PyMem_Free(buf);
   return py_result;
 }
@@ -5107,7 +5108,7 @@ static int Sblob_alter(Sblob *self, PyObject *value, void *closure)
 /* 
  * $endif;
  */
-#line 4320 "_informixdb.ec"
+#line 4321 "_informixdb.ec"
 
 
 PyDoc_STRVAR(_informixdb_doc,
@@ -5199,7 +5200,7 @@ init_informixdb(void)
 /* 
  * $ifdef HAVE_ESQL9;
  */
-#line 4408 "_informixdb.ec"
+#line 4409 "_informixdb.ec"
 
   Py_TYPE(&Sblob_type) = &PyType_Type;
   Sblob_type.tp_alloc = PyType_GenericAlloc;
@@ -5210,7 +5211,7 @@ init_informixdb(void)
 /* 
  * $endif;
  */
-#line 4415 "_informixdb.ec"
+#line 4416 "_informixdb.ec"
 
 
 #ifdef IFX_THREAD
@@ -5235,7 +5236,7 @@ init_informixdb(void)
 /* 
  * $ifdef HAVE_ESQL9;
  */
-#line 4436 "_informixdb.ec"
+#line 4437 "_informixdb.ec"
 
 #define ExposeIntConstant(x) PyModule_AddIntConstant(m, #x, x)
   ExposeIntConstant(SBLOB_TYPE_BLOB);
@@ -5272,7 +5273,7 @@ init_informixdb(void)
 /* 
  * $endif;
  */
-#line 4469 "_informixdb.ec"
+#line 4470 "_informixdb.ec"
 
 
   Py_INCREF(&Connection_type);
@@ -5320,4 +5321,4 @@ init_informixdb(void)
   return m;
 }
 
-#line 4514 "_informixdb.ec"
+#line 4515 "_informixdb.ec"
