@@ -53,10 +53,26 @@ def test():
     uname = '卡布达'
     params.append(uname)
 
-    print(params)
     cursor.prepare(stmt)
     ret = cursor.execute(None,params)
-    print(ret)
+    print('Rows Affected:' + str(ret))
+  
+    stmt = "select * from ifxdbtest"
+    cursor.execute(stmt)
+    colno = len(cursor.description)
+    print('Column Number:' + str(colno))
+    print('')
+
+    for r in cursor.description:
+        print("Name:" + r[0] + "\t", end='')
+        print("Type:" + r[1] + "\t", end='')
+        print("Xid:" + str(r[2]) + "\t", end='')
+        print("Length:" + str(r[3]) + "\t", end='')
+        print("Nullable:" + str(r[6]))
+    ret = cursor.fetchall()
+    #print(type(ret[0][0]))
+ 
+    
     conn.close()
     sys.exit(0)
 

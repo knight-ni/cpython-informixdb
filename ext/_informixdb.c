@@ -1973,7 +1973,7 @@ static void bindOutput(Cursor *cur)
     PyObject *new_tuple = Py_BuildValue("(sNiiOOi)",
                                         var->sqlname,
                                         gettypename(var),
-                                        var->sqllen,
+                                        var->sqlxid,
                                         var->sqllen,
                                         Py_None, Py_None,
                                         !(var->sqltype & SQLNONULL));
