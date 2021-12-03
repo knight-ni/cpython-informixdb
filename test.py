@@ -14,7 +14,6 @@ def test():
     import informixdb
     conn = informixdb.connect('odbc_demodb@ol_gbasedbt10','gbasedbt','P@ssw0rd0LD')
     conn.autocommit = 1  # WE NEED THIS FOR DDL TX COMMIT
-    print(type(conn))
     cursor = conn.cursor()
     cursor.execute("drop table if exists ifxdbtest;")
     stmt_list = ['create table ifxdbtest(']
@@ -121,8 +120,8 @@ def test():
     ret = cursor.fetchall()
 
     print('')
-    print(ret)
-    #print(type(ret[0][0]))
+    for col in ret:
+        print(col[0])
  
     
     conn.close()
