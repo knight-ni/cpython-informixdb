@@ -1421,7 +1421,7 @@ static int ibindInt(struct sqlvar_struct *var, PyObject *item)
 static int ibindString(struct sqlvar_struct *var, PyObject *item)
 {
   PyObject *sitem;
-  const char *val;
+  //char *val;
   int n;
   int sqltype = var->sqltype & SQLTYPE;
 #if HAVE_PY_BOOL == 1
@@ -1445,9 +1445,13 @@ $endif;
     return ibindBinary(var, item);
   }
   sitem = PyObject_Str(item);
+  //sitem = PyObject_Repr(item);
   if (PyErr_Occurred()) return 0;
-  val = PyBytes_AS_STRING((PyBytesObject*)sitem);
+  //val = PyBytes_AS_STRING((PyBytesObject*)sitem);
+  const char *val = PyUnicode_AsUTF8(sitem);
+  printf("%s\n",val);
   n = strlen(val);
+  
 $ifdef HAVE_ESQL9;
   if (ISUDTTYPE(sqltype) || ISCOMPLEXTYPE(sqltype)) {
     /* use lvarchar* instead */

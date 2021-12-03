@@ -53,6 +53,7 @@ def test():
     uname = '卡布达'
     params.append(uname)
 
+    print(params)
     cursor.prepare(stmt)
     ret = cursor.execute(None,params)
     print(ret)
