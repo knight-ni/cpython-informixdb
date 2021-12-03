@@ -1450,7 +1450,6 @@ $endif;
   if (PyErr_Occurred()) return 0;
   //val = PyBytes_AS_STRING((PyBytesObject*)sitem);
   const char *val = PyUnicode_AsUTF8(sitem);
-  printf("%s\n",val);
   n = strlen(val);
   
 $ifdef HAVE_ESQL9;
@@ -3337,12 +3336,7 @@ static PyObject* DatabaseError_init(PyObject* self, PyObject* args, PyObject* kw
 /*
   PyObject* objectsRepresentation = PyObject_Repr(args);
   const char* s = PyUnicode_AsUTF8(objectsRepresentation);
-  printf("%s\n",s);
-  objectsRepresentation = PyObject_Repr(kwds);
-  s = PyUnicode_AsUTF8(objectsRepresentation);
-  printf("%s\n",s);
 */
-  //if (!PyArg_ParseTupleAndKeywords(args, kwds, "OSlO!O", kwdnames, &self, &action, &sqlcode, &PyList_Type, &diags, &sqlerrm)) {
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "OOlO!O", kwdnames, &self, &action, &sqlcode, &PyList_Type, &diags, &sqlerrm)) {
     printf("failed parse\n");
     return NULL;
@@ -3351,7 +3345,6 @@ static PyObject* DatabaseError_init(PyObject* self, PyObject* args, PyObject* kw
 /*
   PyObject* objectsRepresentation = PyObject_Repr(sqlerrm);
   const char* s = PyUnicode_AsUTF8(objectsRepresentation);
-  printf("%s\n",s);
 */
 
   if (PyObject_SetAttrString(self, "action", action)) {
@@ -3416,7 +3409,6 @@ static PyObject* DatabaseError_str(PyObject* self, PyObject* args)
 /*
   PyObject* objectsRepresentation = PyObject_Repr(str);
   const char* s = PyUnicode_AsUTF8(objectsRepresentation);
-  printf("%s\n",s);
 */
 
   Py_DECREF(action);
@@ -3606,8 +3598,6 @@ static int error_handle(Connection *connection, Cursor *cursor,
     PyObject* repr = PyObject_Repr(msg);
     PyObject* str = PyUnicode_AsEncodedString(repr, "utf-8", "~E~");
     const char *bytes = PyBytes_AS_STRING(str);
-
-    printf("REPR: %s\n", bytes);
 */
     if (type != ExcWarning) {
       PyErr_SetObject(type, value);

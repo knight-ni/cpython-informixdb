@@ -102,6 +102,8 @@ def test():
 
     cursor.prepare(stmt)
     ret = cursor.execute(None,params)
+    # use cursor.executemany(None,data[row[],row[],...])
+    # use cursor.callproc(func,param[1,2,3])
     print('Rows Affected:' + str(ret))
   
     stmt = "select * from ifxdbtest"
@@ -117,6 +119,7 @@ def test():
         print("Length:" + str(r[3]) + "\t", end='')
         print("Nullable:" + str(r[6]))
     ret = cursor.fetchall()
+    # use fetchone or fetchmany(N) as need
 
     print('')
 
@@ -130,6 +133,7 @@ def test():
             elif (type == 'byte'):
                 with open('./byte_cat.jpg', 'wb') as f:
                     f.write(col)
+            #Sblob can also "seek", "tell", "stat", "truncate" as needed
             elif(cursor.description[idx][1] == 'fixed udt \'clob\''):
                 col.open()
                 with open('./clob_services', 'wb') as f:
@@ -152,6 +156,7 @@ def test():
                 col.close()
             else:
                 print(col)
+    print("Row Count:"+str(len(ret)))
     
     conn.close()
     sys.exit(0)
