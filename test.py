@@ -6,6 +6,7 @@ import sys
 import json
 import numpy as np
 import datetime
+import decimal
 
 coding = 'utf-8'
 
@@ -38,8 +39,16 @@ def test():
     stmt_list = ['insert into ifxdbtest(']
     stmt_list.append('uid')
     stmt_list.append(',uname')
+    stmt_list.append(',udate')
+    stmt_list.append(',udatetime')
+    stmt_list.append(',ufloat')
+    stmt_list.append(',udecimal')
     stmt_list.append(')')
     stmt_list.append(' values(?')
+    stmt_list.append(',?')
+    stmt_list.append(',?')
+    stmt_list.append(',?')
+    stmt_list.append(',?')
     stmt_list.append(',?')
     stmt_list.append(')')
     stmt = ''.join(stmt_list)
@@ -52,6 +61,18 @@ def test():
 
     uname = '卡布达'
     params.append(uname)
+
+    udate = datetime.date(2021,12,3)
+    params.append(udate)
+
+    udatetime = datetime.datetime.now()
+    params.append(udatetime)
+
+    ufloat = float(514.123)
+    params.append(ufloat)
+
+    udecimal = decimal.Decimal('123123.412')
+    params.append(udecimal)
 
     cursor.prepare(stmt)
     ret = cursor.execute(None,params)
@@ -70,6 +91,9 @@ def test():
         print("Length:" + str(r[3]) + "\t", end='')
         print("Nullable:" + str(r[6]))
     ret = cursor.fetchall()
+
+    print('')
+    print(ret)
     #print(type(ret[0][0]))
  
     
