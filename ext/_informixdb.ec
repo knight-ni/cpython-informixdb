@@ -1399,6 +1399,25 @@ static int ibindDate(struct sqlvar_struct *var, PyObject *date)
   return 1;
 }
 
+static int ibindInt(struct sqlvar_struct *var, PyObject *item)
+{
+  int4 *val = (int4*)malloc(sizeof(int4));
+  int sqltype = var->sqltype & SQLTYPE;
+  if (sqltype==SQLSMINT){
+    var->sqltype = CSHORTTYPE;
+  } else if (sqltype==SQLINT||sqltype==SQLSERIAL){
+    var->sqltype = CLONGTYPE;
+  } 
+
+  *val = PyLong_AsLong(item);
+  var->sqllen = rtypmsize(var->sqltype, var->sqllen);
+  var->sqldata = (void *)val;
+  *var->sqlind = 0;
+
+  return 1;
+}
+
+
 static int ibindString(struct sqlvar_struct *var, PyObject *item)
 {
   PyObject *sitem;
@@ -1557,6 +1576,8 @@ $endif;
     return (ibindFptr)ibindDate;
   } else if(item == Py_None) {
     return ibindNone;
+  } else if(PyLong_Check(item)){
+    return ibindInt;
   } else {
     return ibindString;
   }
@@ -2022,7 +2043,6 @@ $endif;
   Py_DECREF(self->op);
   self->op = op;
   Py_INCREF(op);
-
   /* No INCREF because the callers don't DECREF. */
   return Py_None;
 }
@@ -2069,6 +2089,16 @@ static PyObject *Cursor_execute(Cursor *self, PyObject *args, PyObject *kwds)
   if (op==Py_None)
     op = self->op;
   
+/*
+  PyObject* objectsRepresentation = PyObject_Repr(op);
+  const char* s = PyUnicode_AsUTF8(objectsRepresentation);
+  printf("args:%s\n",s);
+
+  objectsRepresentation = PyObject_Repr(inputvars);
+  s = PyUnicode_AsUTF8(objectsRepresentation);
+  printf("args:%s\n",s);
+*/
+
   /* Make sure we talk to the right database. */
   if (setConnection(self->conn)) return NULL;
 
@@ -2635,7 +2665,10 @@ $ifdef HAVE_ESQL9;
           ifx_var_dealloc((void**)&(da->sqlvar[i].sqldata));
         }
 $endif;
-        free(da->sqlvar[i].sqldata);
+        if (da->sqlvar[i].sqldata != NULL){
+          printf("%lu\n",sizeof(da->sqlvar[i].sqldata));
+          free(da->sqlvar[i].sqldata);
+        }
       }
     }
   }
@@ -2884,7 +2917,6 @@ static PyObject* Cursor_iternext(Cursor *self)
 
 static PyObject *Cursor_fetchone(Cursor *self)
 {
-  printf("asdfasdf");
   struct sqlda *tdaOut = self->daOut;
   int i;
   void (*oldsighandler)(int);
@@ -3299,7 +3331,6 @@ static PyObject* DatabaseError_init(PyObject* self, PyObject* args, PyObject* kw
   PyObject *sqlerrm;
 
 /*
-  printf("HERE");
   PyObject* objectsRepresentation = PyObject_Repr(args);
   const char* s = PyUnicode_AsUTF8(objectsRepresentation);
   printf("%s\n",s);

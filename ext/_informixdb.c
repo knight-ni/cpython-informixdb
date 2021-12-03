@@ -1539,6 +1539,25 @@ static int ibindDate(struct sqlvar_struct *var, PyObject *date)
   return 1;
 }
 
+static int ibindInt(struct sqlvar_struct *var, PyObject *item)
+{
+  int4 *val = (int4*)malloc(sizeof(int4));
+  int sqltype = var->sqltype & SQLTYPE;
+  if (sqltype==SQLSMINT){
+    var->sqltype = CSHORTTYPE;
+  } else if (sqltype==SQLINT||sqltype==SQLSERIAL){
+    var->sqltype = CLONGTYPE;
+  }
+
+  *val = PyLong_AsLong(item);
+  var->sqllen = rtypmsize(var->sqltype, var->sqllen);
+  var->sqldata = (void *)val;
+  *var->sqlind = 0;
+
+  return 1;
+}
+
+
 static int ibindString(struct sqlvar_struct *var, PyObject *item)
 {
   PyObject *sitem;
@@ -1553,7 +1572,7 @@ static int ibindString(struct sqlvar_struct *var, PyObject *item)
 /* 
  * $ifdef HAVE_ESQL9;
  */
-#line 1413 "_informixdb.ec"
+#line 1432 "_informixdb.ec"
 
   if (sqltype==SQLBOOL
       || LIKEBOOLEANXTYPE(var->sqltype, var->sqlxid) ) {
@@ -1568,7 +1587,7 @@ static int ibindString(struct sqlvar_struct *var, PyObject *item)
 /* 
  * $endif;
  */
-#line 1424 "_informixdb.ec"
+#line 1443 "_informixdb.ec"
 
   if (sqltype==SQLTEXT||sqltype==SQLBYTES) {
     return ibindBinary(var, item);
@@ -1580,20 +1599,20 @@ static int ibindString(struct sqlvar_struct *var, PyObject *item)
 /* 
  * $ifdef HAVE_ESQL9;
  */
-#line 1432 "_informixdb.ec"
+#line 1451 "_informixdb.ec"
 
   if (ISUDTTYPE(sqltype) || ISCOMPLEXTYPE(sqltype)) {
     /* use lvarchar* instead */
 /*
  *     EXEC SQL BEGIN DECLARE SECTION;
  */
-#line 1435 "_informixdb.ec"
-#line 1436 "_informixdb.ec"
+#line 1454 "_informixdb.ec"
+#line 1455 "_informixdb.ec"
   void **data;
 /*
  *     EXEC SQL END DECLARE SECTION;
  */
-#line 1437 "_informixdb.ec"
+#line 1456 "_informixdb.ec"
 
     data = malloc(sizeof(void*));
     *data = 0;
@@ -1612,7 +1631,7 @@ static int ibindString(struct sqlvar_struct *var, PyObject *item)
 /* 
  * $endif;
  */
-#line 1452 "_informixdb.ec"
+#line 1471 "_informixdb.ec"
 
   {
     var->sqltype = CVCHARTYPE;
@@ -1654,7 +1673,7 @@ static int ibindInterval(struct sqlvar_struct *var, PyObject *item)
 /* 
  * $ifdef HAVE_ESQL9;
  */
-#line 1490 "_informixdb.ec"
+#line 1509 "_informixdb.ec"
 
 static int ibindSblob(struct sqlvar_struct *var, PyObject *item)
 {
@@ -1674,7 +1693,7 @@ static int ibindSblob(struct sqlvar_struct *var, PyObject *item)
 /* 
  * $endif;
  */
-#line 1506 "_informixdb.ec"
+#line 1525 "_informixdb.ec"
 
 
 static int ibindNone(struct sqlvar_struct *var, PyObject *item)
@@ -1683,20 +1702,20 @@ static int ibindNone(struct sqlvar_struct *var, PyObject *item)
 /* 
  * $ifdef HAVE_ESQL9;
  */
-#line 1511 "_informixdb.ec"
+#line 1530 "_informixdb.ec"
 
   if (ISUDTTYPE(sqltype) || ISCOMPLEXTYPE(sqltype)) {
     /* use lvarchar* instead */
 /*
  *     EXEC SQL BEGIN DECLARE SECTION;
  */
-#line 1514 "_informixdb.ec"
-#line 1515 "_informixdb.ec"
+#line 1533 "_informixdb.ec"
+#line 1534 "_informixdb.ec"
   void **data;
 /*
  *     EXEC SQL END DECLARE SECTION;
  */
-#line 1516 "_informixdb.ec"
+#line 1535 "_informixdb.ec"
 
     data = malloc(sizeof(void*));
     *data = 0;
@@ -1714,7 +1733,7 @@ static int ibindNone(struct sqlvar_struct *var, PyObject *item)
 /* 
  * $endif;
  */
-#line 1530 "_informixdb.ec"
+#line 1549 "_informixdb.ec"
 
   {
     var->sqltype = CSTRINGTYPE;
@@ -1732,7 +1751,7 @@ static ibindFptr ibindFcn(PyObject* item)
 /* 
  * $ifdef HAVE_ESQL9;
  */
-#line 1544 "_informixdb.ec"
+#line 1563 "_informixdb.ec"
 
   if (PyObject_IsInstance(item, (PyObject*)&Sblob_type)) {
     return ibindSblob;
@@ -1740,7 +1759,7 @@ static ibindFptr ibindFcn(PyObject* item)
 /* 
  * $endif;
  */
-#line 1548 "_informixdb.ec"
+#line 1567 "_informixdb.ec"
 
   if (PyObject_IsInstance(item, IntervalY2MType) ||
       PyObject_IsInstance(item, IntervalD2FType)) {
@@ -1753,6 +1772,8 @@ static ibindFptr ibindFcn(PyObject* item)
     return (ibindFptr)ibindDate;
   } else if(item == Py_None) {
     return ibindNone;
+  } else if(PyLong_Check(item)){
+    return ibindInt;
   } else {
     return ibindString;
   }
@@ -1904,7 +1925,7 @@ static PyObject* gettypename(struct sqlvar_struct *var)
 /* 
  * $ifdef HAVE_ESQL9;
  */
-#line 1708 "_informixdb.ec"
+#line 1729 "_informixdb.ec"
 
   if (ISCOMPLEXTYPE(var->sqltype)||ISUDTTYPE(var->sqltype)) {
     return PyUnicode_FromFormat("%s '%s'", rtypname(var->sqltype),
@@ -1914,12 +1935,12 @@ static PyObject* gettypename(struct sqlvar_struct *var)
 /* 
  * $else;
  */
-#line 1714 "_informixdb.ec"
+#line 1735 "_informixdb.ec"
 
 /* 
  * $endif;
  */
-#line 1716 "_informixdb.ec"
+#line 1737 "_informixdb.ec"
 
 }
 
@@ -1959,18 +1980,18 @@ static void bindOutput(Cursor *cur)
 /* 
  * $ifdef HAVE_ESQL9;
  */
-#line 1752 "_informixdb.ec"
+#line 1773 "_informixdb.ec"
 
     cur->originalXid[pos] = var->sqlxid;
 /* 
  * $else;
  */
-#line 1754 "_informixdb.ec"
+#line 1775 "_informixdb.ec"
 
 /* 
  * $endif;
  */
-#line 1756 "_informixdb.ec"
+#line 1777 "_informixdb.ec"
 
     cur->originalLen[pos] = var->sqllen;
     var->sqldata = NULL;
@@ -2006,7 +2027,7 @@ static void bindOutput(Cursor *cur)
 /* 
  * $ifdef HAVE_ESQL9;
  */
-#line 1788 "_informixdb.ec"
+#line 1809 "_informixdb.ec"
 
     case SQLINT8:
     case SQLSERIAL8:
@@ -2016,7 +2037,7 @@ static void bindOutput(Cursor *cur)
 /* 
  * $endif;
  */
-#line 1794 "_informixdb.ec"
+#line 1815 "_informixdb.ec"
 
     case SQLDTIME:
       var->sqltype = CDTIMETYPE;
@@ -2033,7 +2054,7 @@ static void bindOutput(Cursor *cur)
 /* 
  * $ifdef HAVE_ESQL9;
  */
-#line 1807 "_informixdb.ec"
+#line 1828 "_informixdb.ec"
 
         if (!known_type &&
             ((var->sqltype&SQLTYPE)==SQLBOOL
@@ -2055,13 +2076,13 @@ static void bindOutput(Cursor *cur)
 /*
  *           exec sql begin declare section;
  */
-#line 1825 "_informixdb.ec"
-#line 1826 "_informixdb.ec"
+#line 1846 "_informixdb.ec"
+#line 1847 "_informixdb.ec"
   void **currentlvarcharptr;
 /*
  *           exec sql end declare section;
  */
-#line 1827 "_informixdb.ec"
+#line 1848 "_informixdb.ec"
 
 
           if (ISUDTTYPE(var->sqltype)) {
@@ -2091,7 +2112,7 @@ static void bindOutput(Cursor *cur)
 /* 
  * $endif;
  */
-#line 1853 "_informixdb.ec"
+#line 1874 "_informixdb.ec"
 
         /* fall back to character string */
         if (!known_type)
@@ -2155,13 +2176,13 @@ static void copyDescr(struct sqlda *tdaDest, struct sqlda *tdaSrc)
 /* 
  * $ifdef HAVE_ESQL9;
  */
-#line 1913 "_informixdb.ec"
+#line 1934 "_informixdb.ec"
 
     varDest->sqlxid = varSrc->sqlxid;
 /* 
  * $endif;
  */
-#line 1915 "_informixdb.ec"
+#line 1936 "_informixdb.ec"
 
     varSrc++;
     varDest++;
@@ -2187,15 +2208,15 @@ static PyObject *do_prepare(Cursor *self, PyObject *op)
 /*
  *   EXEC SQL BEGIN DECLARE SECTION;
  */
-#line 1937 "_informixdb.ec"
-#line 1938 "_informixdb.ec"
+#line 1958 "_informixdb.ec"
+#line 1959 "_informixdb.ec"
   char *queryName = self->queryName;
   char *cursorName = self->cursorName;
   char *newSql;
 /*
  *   EXEC SQL END DECLARE SECTION;
  */
-#line 1941 "_informixdb.ec"
+#line 1962 "_informixdb.ec"
 
 
   clear_messages(self);
@@ -2223,11 +2244,11 @@ static PyObject *do_prepare(Cursor *self, PyObject *op)
 /*
  *   EXEC SQL PREPARE :queryName FROM :newSql;
  */
-#line 1965 "_informixdb.ec"
+#line 1986 "_informixdb.ec"
   {
-#line 1965 "_informixdb.ec"
+#line 1986 "_informixdb.ec"
   sqli_prep(ESQLINTVERSION, queryName, newSql,(ifx_literal_t *)0, (ifx_namelist_t *)0, -1, 0, 0 ); 
-#line 1965 "_informixdb.ec"
+#line 1986 "_informixdb.ec"
   }
   for (i=0; i<6; i++) self->sqlerrd[i] = sqlca.sqlerrd[i];
   free(newSql);
@@ -2237,11 +2258,11 @@ static PyObject *do_prepare(Cursor *self, PyObject *op)
 /*
  *   EXEC SQL DESCRIBE :queryName INTO tdaOut;
  */
-#line 1971 "_informixdb.ec"
+#line 1992 "_informixdb.ec"
   {
-#line 1971 "_informixdb.ec"
+#line 1992 "_informixdb.ec"
   sqli_describe_stmt(ESQLINTVERSION, sqli_curs_locate(ESQLINTVERSION, queryName, 257), &tdaOut, 0);
-#line 1971 "_informixdb.ec"
+#line 1992 "_informixdb.ec"
   }
   ret_on_dberror_cursor(self, "DESCRIBE");
   self->daOut = tdaOut;
@@ -2253,18 +2274,18 @@ static PyObject *do_prepare(Cursor *self, PyObject *op)
 /* 
  * $ifdef HAVE_DESCRIBE_INPUT;
  */
-#line 1979 "_informixdb.ec"
+#line 2000 "_informixdb.ec"
 
     if (self->conn->can_describe_input) {
       struct sqlda *tda = NULL;
 /*
  *       EXEC SQL DESCRIBE INPUT :queryName INTO tda;
  */
-#line 1982 "_informixdb.ec"
+#line 2003 "_informixdb.ec"
   {
-#line 1982 "_informixdb.ec"
+#line 2003 "_informixdb.ec"
   sqli_describe_input_stmt(ESQLINTVERSION, sqli_curs_locate(ESQLINTVERSION, queryName, 257), &tda, 0);
-#line 1982 "_informixdb.ec"
+#line 2003 "_informixdb.ec"
   }
       if (SQLCODE==-1834) {
           tda = NULL;
@@ -2279,7 +2300,7 @@ static PyObject *do_prepare(Cursor *self, PyObject *op)
 /* 
  * $endif;
  */
-#line 1993 "_informixdb.ec"
+#line 2014 "_informixdb.ec"
 
   }
   if (self->has_output) {
@@ -2289,44 +2310,44 @@ static PyObject *do_prepare(Cursor *self, PyObject *op)
 /*
  *         EXEC SQL DECLARE :cursorName SCROLL CURSOR WITH HOLD FOR :queryName;
  */
-#line 1999 "_informixdb.ec"
+#line 2020 "_informixdb.ec"
   {
-#line 1999 "_informixdb.ec"
+#line 2020 "_informixdb.ec"
   sqli_curs_decl_dynm(ESQLINTVERSION, sqli_curs_locate(ESQLINTVERSION, cursorName, 0), cursorName, sqli_curs_locate(ESQLINTVERSION, queryName, 1), 4128, 0);
-#line 1999 "_informixdb.ec"
+#line 2020 "_informixdb.ec"
   }
         break;
       case 2:
 /*
  *         EXEC SQL DECLARE :cursorName SCROLL CURSOR FOR :queryName;
  */
-#line 2002 "_informixdb.ec"
+#line 2023 "_informixdb.ec"
   {
-#line 2002 "_informixdb.ec"
+#line 2023 "_informixdb.ec"
   sqli_curs_decl_dynm(ESQLINTVERSION, sqli_curs_locate(ESQLINTVERSION, cursorName, 0), cursorName, sqli_curs_locate(ESQLINTVERSION, queryName, 1), 32, 0);
-#line 2002 "_informixdb.ec"
+#line 2023 "_informixdb.ec"
   }
                                                                    break;
       case 1:
 /*
  *         EXEC SQL DECLARE :cursorName CURSOR WITH HOLD FOR :queryName;
  */
-#line 2004 "_informixdb.ec"
+#line 2025 "_informixdb.ec"
   {
-#line 2004 "_informixdb.ec"
+#line 2025 "_informixdb.ec"
   sqli_curs_decl_dynm(ESQLINTVERSION, sqli_curs_locate(ESQLINTVERSION, cursorName, 0), cursorName, sqli_curs_locate(ESQLINTVERSION, queryName, 1), 4096, 0);
-#line 2004 "_informixdb.ec"
+#line 2025 "_informixdb.ec"
   }
                                                                       break;
       case 0:
 /*
  *         EXEC SQL DECLARE :cursorName CURSOR FOR :queryName;
  */
-#line 2006 "_informixdb.ec"
+#line 2027 "_informixdb.ec"
   {
-#line 2006 "_informixdb.ec"
+#line 2027 "_informixdb.ec"
   sqli_curs_decl_dynm(ESQLINTVERSION, sqli_curs_locate(ESQLINTVERSION, cursorName, 0), cursorName, sqli_curs_locate(ESQLINTVERSION, queryName, 1), 0, 0);
-#line 2006 "_informixdb.ec"
+#line 2027 "_informixdb.ec"
   }
                                                             break;
     }
@@ -2334,11 +2355,11 @@ static PyObject *do_prepare(Cursor *self, PyObject *op)
 /*
  *     EXEC SQL FREE :queryName;
  */
-#line 2009 "_informixdb.ec"
+#line 2030 "_informixdb.ec"
   {
-#line 2009 "_informixdb.ec"
+#line 2030 "_informixdb.ec"
   sqli_curs_free(ESQLINTVERSION, sqli_curs_locate(ESQLINTVERSION, queryName, 258));
-#line 2009 "_informixdb.ec"
+#line 2030 "_informixdb.ec"
   }
     ret_on_dberror_cursor(self, "FREE");
     self->state = 2;
@@ -2355,7 +2376,6 @@ static PyObject *do_prepare(Cursor *self, PyObject *op)
   Py_DECREF(self->op);
   self->op = op;
   Py_INCREF(op);
-
   /* No INCREF because the callers don't DECREF. */
   return Py_None;
 }
@@ -2389,14 +2409,14 @@ static PyObject *Cursor_execute(Cursor *self, PyObject *args, PyObject *kwds)
 /*
  *   EXEC SQL BEGIN DECLARE SECTION;
  */
-#line 2056 "_informixdb.ec"
-#line 2057 "_informixdb.ec"
+#line 2076 "_informixdb.ec"
+#line 2077 "_informixdb.ec"
   char *queryName = self->queryName;
   char *cursorName = self->cursorName;
 /*
  *   EXEC SQL END DECLARE SECTION;
  */
-#line 2059 "_informixdb.ec"
+#line 2079 "_informixdb.ec"
 
   void (*oldsighandler)(int);
 
@@ -2409,6 +2429,16 @@ static PyObject *Cursor_execute(Cursor *self, PyObject *args, PyObject *kwds)
     return NULL;
   if (op==Py_None)
     op = self->op;
+
+/*
+  PyObject* objectsRepresentation = PyObject_Repr(op);
+  const char* s = PyUnicode_AsUTF8(objectsRepresentation);
+  printf("args:%s\n",s);
+
+  objectsRepresentation = PyObject_Repr(inputvars);
+  s = PyUnicode_AsUTF8(objectsRepresentation);
+  printf("args:%s\n",s);
+*/
 
   /* Make sure we talk to the right database. */
   if (setConnection(self->conn)) return NULL;
@@ -2439,11 +2469,11 @@ static PyObject *Cursor_execute(Cursor *self, PyObject *args, PyObject *kwds)
 /*
  *     EXEC SQL OPEN :cursorName USING DESCRIPTOR tdaIn;
  */
-#line 2098 "_informixdb.ec"
+#line 2128 "_informixdb.ec"
   {
-#line 2098 "_informixdb.ec"
+#line 2128 "_informixdb.ec"
   sqli_curs_open(ESQLINTVERSION, sqli_curs_locate(ESQLINTVERSION, cursorName, 256), tdaIn, (char *)0, (struct value *)0, 1, 0);
-#line 2098 "_informixdb.ec"
+#line 2128 "_informixdb.ec"
   }
     if (self->sqlinterrupt) {
       signal(2, oldsighandler);
@@ -2468,11 +2498,11 @@ static PyObject *Cursor_execute(Cursor *self, PyObject *args, PyObject *kwds)
 /*
  *     EXEC SQL EXECUTE :queryName USING DESCRIPTOR tdaIn;
  */
-#line 2119 "_informixdb.ec"
+#line 2149 "_informixdb.ec"
   {
-#line 2119 "_informixdb.ec"
+#line 2149 "_informixdb.ec"
   sqli_exec(ESQLINTVERSION, sqli_curs_locate(ESQLINTVERSION, queryName, 257), tdaIn, (char *)0, (struct value *)0, (ifx_sqlda_t *)0, (char *)0, (struct value *)0, 0);
-#line 2119 "_informixdb.ec"
+#line 2149 "_informixdb.ec"
   }
     if (self->sqlinterrupt) {
       signal(2, oldsighandler);
@@ -2512,14 +2542,14 @@ static PyObject *Cursor_executemany(Cursor *self,
 /*
  *   EXEC SQL BEGIN DECLARE SECTION;
  */
-#line 2155 "_informixdb.ec"
-#line 2156 "_informixdb.ec"
+#line 2185 "_informixdb.ec"
+#line 2186 "_informixdb.ec"
   char *queryName = self->queryName;
   char *cursorName = self->cursorName;
 /*
  *   EXEC SQL END DECLARE SECTION;
  */
-#line 2158 "_informixdb.ec"
+#line 2188 "_informixdb.ec"
 
 
   clear_messages(self);
@@ -2550,21 +2580,21 @@ static PyObject *Cursor_executemany(Cursor *self,
 /*
  *       EXEC SQL DECLARE :cursorName CURSOR FOR :queryName;
  */
-#line 2185 "_informixdb.ec"
+#line 2215 "_informixdb.ec"
   {
-#line 2185 "_informixdb.ec"
+#line 2215 "_informixdb.ec"
   sqli_curs_decl_dynm(ESQLINTVERSION, sqli_curs_locate(ESQLINTVERSION, cursorName, 0), cursorName, sqli_curs_locate(ESQLINTVERSION, queryName, 1), 0, 0);
-#line 2185 "_informixdb.ec"
+#line 2215 "_informixdb.ec"
   }
       ret_on_dberror_cursor(self, "DECLARE");
 /*
  *       EXEC SQL FREE :queryName;
  */
-#line 2187 "_informixdb.ec"
+#line 2217 "_informixdb.ec"
   {
-#line 2187 "_informixdb.ec"
+#line 2217 "_informixdb.ec"
   sqli_curs_free(ESQLINTVERSION, sqli_curs_locate(ESQLINTVERSION, queryName, 258));
-#line 2187 "_informixdb.ec"
+#line 2217 "_informixdb.ec"
   }
       ret_on_dberror_cursor(self, "FREE");
       self->state = 2;
@@ -2573,11 +2603,11 @@ static PyObject *Cursor_executemany(Cursor *self,
 /*
  *     EXEC SQL OPEN :cursorName;
  */
-#line 2192 "_informixdb.ec"
+#line 2222 "_informixdb.ec"
   {
-#line 2192 "_informixdb.ec"
+#line 2222 "_informixdb.ec"
   sqli_curs_open(ESQLINTVERSION, sqli_curs_locate(ESQLINTVERSION, cursorName, 256), (ifx_sqlda_t *)0, (char *)0, (struct value *)0, 0, 0);
-#line 2192 "_informixdb.ec"
+#line 2222 "_informixdb.ec"
   }
     ret_on_dberror_cursor(self, "OPEN");
     self->state = 3;
@@ -2598,11 +2628,11 @@ static PyObject *Cursor_executemany(Cursor *self,
 /*
  *       EXEC SQL OPEN :cursorName USING DESCRIPTOR tdaIn;
  */
-#line 2209 "_informixdb.ec"
+#line 2239 "_informixdb.ec"
   {
-#line 2209 "_informixdb.ec"
+#line 2239 "_informixdb.ec"
   sqli_curs_open(ESQLINTVERSION, sqli_curs_locate(ESQLINTVERSION, cursorName, 256), tdaIn, (char *)0, (struct value *)0, 1, 0);
-#line 2209 "_informixdb.ec"
+#line 2239 "_informixdb.ec"
   }
       ret_on_dberror_cursor(self, "OPEN");
       self->state = 3;
@@ -2614,21 +2644,21 @@ static PyObject *Cursor_executemany(Cursor *self,
 /*
  *         EXEC SQL PUT :cursorName USING DESCRIPTOR tdaIn;
  */
-#line 2217 "_informixdb.ec"
+#line 2247 "_informixdb.ec"
   {
-#line 2217 "_informixdb.ec"
+#line 2247 "_informixdb.ec"
   sqli_curs_put(ESQLINTVERSION, sqli_curs_locate(ESQLINTVERSION, cursorName, 256), tdaIn, (char *)0);
-#line 2217 "_informixdb.ec"
+#line 2247 "_informixdb.ec"
   }
       } else {
 /*
  *         EXEC SQL EXECUTE :queryName USING DESCRIPTOR tdaIn;
  */
-#line 2219 "_informixdb.ec"
+#line 2249 "_informixdb.ec"
   {
-#line 2219 "_informixdb.ec"
+#line 2249 "_informixdb.ec"
   sqli_exec(ESQLINTVERSION, sqli_curs_locate(ESQLINTVERSION, queryName, 257), tdaIn, (char *)0, (struct value *)0, (ifx_sqlda_t *)0, (char *)0, (struct value *)0, 0);
-#line 2219 "_informixdb.ec"
+#line 2249 "_informixdb.ec"
   }
       }
       Py_END_ALLOW_THREADS;
@@ -2660,21 +2690,21 @@ static PyObject *Cursor_executemany(Cursor *self,
 /*
  *     EXEC SQL FLUSH :cursorName;
  */
-#line 2247 "_informixdb.ec"
+#line 2277 "_informixdb.ec"
   {
-#line 2247 "_informixdb.ec"
+#line 2277 "_informixdb.ec"
   sqli_curs_flush(ESQLINTVERSION, sqli_curs_locate(ESQLINTVERSION, cursorName, 256));
-#line 2247 "_informixdb.ec"
+#line 2277 "_informixdb.ec"
   }
     rowcount += sqlca.sqlerrd[2];
 /*
  *     EXEC SQL CLOSE :cursorName;
  */
-#line 2249 "_informixdb.ec"
+#line 2279 "_informixdb.ec"
   {
-#line 2249 "_informixdb.ec"
+#line 2279 "_informixdb.ec"
   sqli_curs_close(ESQLINTVERSION, sqli_curs_locate(ESQLINTVERSION, cursorName, 256));
-#line 2249 "_informixdb.ec"
+#line 2279 "_informixdb.ec"
   }
     Py_END_ALLOW_THREADS;
   }
@@ -2712,13 +2742,13 @@ static PyObject *doCopy(struct sqlvar_struct *var,
 /*
  *     exec sql begin declare section;
  */
-#line 2283 "_informixdb.ec"
-#line 2284 "_informixdb.ec"
+#line 2313 "_informixdb.ec"
+#line 2314 "_informixdb.ec"
   dtime_t dt_extended = {4879};
 /*
  *     exec sql end declare section;
  */
-#line 2285 "_informixdb.ec"
+#line 2315 "_informixdb.ec"
 
 
     origdt = dt;
@@ -2795,13 +2825,13 @@ static PyObject *doCopy(struct sqlvar_struct *var,
 /*
  *       exec sql begin declare section;
  */
-#line 2358 "_informixdb.ec"
-#line 2359 "_informixdb.ec"
+#line 2388 "_informixdb.ec"
+#line 2389 "_informixdb.ec"
   intrvl_t inv_extended = {2818};
 /*
  *       exec sql end declare section;
  */
-#line 2360 "_informixdb.ec"
+#line 2390 "_informixdb.ec"
 
       invextend(inv, &inv_extended);
       inv = &inv_extended;
@@ -2822,13 +2852,13 @@ static PyObject *doCopy(struct sqlvar_struct *var,
 /*
  *       exec sql begin declare section;
  */
-#line 2377 "_informixdb.ec"
-#line 2378 "_informixdb.ec"
+#line 2407 "_informixdb.ec"
+#line 2408 "_informixdb.ec"
   intrvl_t inv_extended = {5199};
 /*
  *       exec sql end declare section;
  */
-#line 2379 "_informixdb.ec"
+#line 2409 "_informixdb.ec"
 
       invextend(inv, &inv_extended);
       inv = &inv_extended;
@@ -2862,13 +2892,13 @@ static PyObject *doCopy(struct sqlvar_struct *var,
 /* 
  * $ifdef HAVE_ESQL9;
  */
-#line 2409 "_informixdb.ec"
+#line 2439 "_informixdb.ec"
 
   case SQLLVARCHAR:
 /* 
  * $endif;
  */
-#line 2411 "_informixdb.ec"
+#line 2441 "_informixdb.ec"
 
       return Py_BuildValue("s", (char*)data);
   case SQLFLOAT:
@@ -2912,7 +2942,7 @@ static PyObject *doCopy(struct sqlvar_struct *var,
 /* 
  * $ifdef HAVE_ESQL9;
  */
-#line 2451 "_informixdb.ec"
+#line 2481 "_informixdb.ec"
 
   case SQLINT8:
   case SQLSERIAL8:
@@ -2920,7 +2950,7 @@ static PyObject *doCopy(struct sqlvar_struct *var,
 /* 
  * $endif;
  */
-#line 2455 "_informixdb.ec"
+#line 2485 "_informixdb.ec"
 
   case SQLBYTES:
   case SQLTEXT:
@@ -2947,7 +2977,7 @@ static PyObject *doCopy(struct sqlvar_struct *var,
 /* 
  * $ifdef HAVE_ESQL9;
  */
-#line 2478 "_informixdb.ec"
+#line 2508 "_informixdb.ec"
 
   if ((type&SQLTYPE)==SQLBOOL||LIKEBOOLEANXTYPE(type,xid) ) {
     PyObject *result = (*(char*)data)?Py_True:Py_False;
@@ -2996,7 +3026,7 @@ static PyObject *doCopy(struct sqlvar_struct *var,
 /* 
  * $endif;
  */
-#line 2523 "_informixdb.ec"
+#line 2553 "_informixdb.ec"
 
   {
     /* Unknown type. bindOutput falls back to binding to a character string.
@@ -3072,7 +3102,7 @@ static PyObject *Connection_cursor(Connection *self, PyObject *args, PyObject *k
 /* 
  * $ifdef HAVE_ESQL9;
  */
-#line 2595 "_informixdb.ec"
+#line 2625 "_informixdb.ec"
 
 static PyObject *Connection_Sblob(Connection *self, PyObject *args, PyObject *kwds)
 {
@@ -3098,7 +3128,7 @@ static PyObject *Connection_Sblob(Connection *self, PyObject *args, PyObject *kw
 /* 
  * $endif;
  */
-#line 2617 "_informixdb.ec"
+#line 2647 "_informixdb.ec"
 
 
 static void cleanInputBinding(Cursor *cur)
@@ -3118,7 +3148,7 @@ static void cleanInputBinding(Cursor *cur)
 /* 
  * $ifdef HAVE_ESQL9;
  */
-#line 2633 "_informixdb.ec"
+#line 2663 "_informixdb.ec"
 
         if (da->sqlvar[i].sqltype == SQLUDTVAR) {
           ifx_var_dealloc((void**)&(da->sqlvar[i].sqldata));
@@ -3126,9 +3156,12 @@ static void cleanInputBinding(Cursor *cur)
 /* 
  * $endif;
  */
-#line 2637 "_informixdb.ec"
+#line 2667 "_informixdb.ec"
 
-        free(da->sqlvar[i].sqldata);
+        if (da->sqlvar[i].sqldata != NULL){
+          printf("%lu\n",sizeof(da->sqlvar[i].sqldata));
+          free(da->sqlvar[i].sqldata);
+        }
       }
     }
   }
@@ -3170,7 +3203,7 @@ static void deleteOutputBinding(Cursor *cur)
 /* 
  * $ifdef HAVE_ESQL9;
  */
-#line 2677 "_informixdb.ec"
+#line 2710 "_informixdb.ec"
 
       if (ISSMARTBLOB(cur->originalType[i],cur->originalXid[i])) {
         free(da->sqlvar[i].sqldata);
@@ -3178,7 +3211,7 @@ static void deleteOutputBinding(Cursor *cur)
 /* 
  * $endif;
  */
-#line 2681 "_informixdb.ec"
+#line 2714 "_informixdb.ec"
 
     }
     _da_free(cur->daOut);
@@ -3216,14 +3249,14 @@ static void doCloseCursor(Cursor *cur, int doFree)
 /*
  *   EXEC SQL BEGIN DECLARE SECTION;
  */
-#line 2715 "_informixdb.ec"
-#line 2716 "_informixdb.ec"
+#line 2748 "_informixdb.ec"
+#line 2749 "_informixdb.ec"
   char *cursorName = cur->cursorName;
   char *queryName = cur->queryName;
 /*
  *   EXEC SQL END DECLARE SECTION;
  */
-#line 2718 "_informixdb.ec"
+#line 2751 "_informixdb.ec"
 
 
   if (cur->has_output) {
@@ -3232,11 +3265,11 @@ static void doCloseCursor(Cursor *cur, int doFree)
 /*
  *       EXEC SQL CLOSE :cursorName;
  */
-#line 2723 "_informixdb.ec"
+#line 2756 "_informixdb.ec"
   {
-#line 2723 "_informixdb.ec"
+#line 2756 "_informixdb.ec"
   sqli_curs_close(ESQLINTVERSION, sqli_curs_locate(ESQLINTVERSION, cursorName, 256));
-#line 2723 "_informixdb.ec"
+#line 2756 "_informixdb.ec"
   }
       cur->state = 4;
     }
@@ -3247,11 +3280,11 @@ static void doCloseCursor(Cursor *cur, int doFree)
 /*
  *         EXEC SQL FREE :queryName;
  */
-#line 2730 "_informixdb.ec"
+#line 2763 "_informixdb.ec"
   {
-#line 2730 "_informixdb.ec"
+#line 2763 "_informixdb.ec"
   sqli_curs_free(ESQLINTVERSION, sqli_curs_locate(ESQLINTVERSION, queryName, 258));
-#line 2730 "_informixdb.ec"
+#line 2763 "_informixdb.ec"
   }
 
       /* if cursor is at least declared, free it */
@@ -3259,11 +3292,11 @@ static void doCloseCursor(Cursor *cur, int doFree)
 /*
  *         EXEC SQL FREE :cursorName;
  */
-#line 2734 "_informixdb.ec"
+#line 2767 "_informixdb.ec"
   {
-#line 2734 "_informixdb.ec"
+#line 2767 "_informixdb.ec"
   sqli_curs_free(ESQLINTVERSION, sqli_curs_locate(ESQLINTVERSION, cursorName, 258));
-#line 2734 "_informixdb.ec"
+#line 2767 "_informixdb.ec"
   }
 
       cur->state = 0;
@@ -3274,11 +3307,11 @@ static void doCloseCursor(Cursor *cur, int doFree)
 /*
  *       EXEC SQL FREE :queryName;
  */
-#line 2741 "_informixdb.ec"
+#line 2774 "_informixdb.ec"
   {
-#line 2741 "_informixdb.ec"
+#line 2774 "_informixdb.ec"
   sqli_curs_free(ESQLINTVERSION, sqli_curs_locate(ESQLINTVERSION, queryName, 258));
-#line 2741 "_informixdb.ec"
+#line 2774 "_informixdb.ec"
   }
       cur->state = 0;
     }
@@ -3425,20 +3458,19 @@ static PyObject* Cursor_iternext(Cursor *self)
 
 static PyObject *Cursor_fetchone(Cursor *self)
 {
-  printf("asdfasdf");
   struct sqlda *tdaOut = self->daOut;
   int i;
   void (*oldsighandler)(int);
 /*
  *   EXEC SQL BEGIN DECLARE SECTION;
  */
-#line 2891 "_informixdb.ec"
-#line 2892 "_informixdb.ec"
+#line 2923 "_informixdb.ec"
+#line 2924 "_informixdb.ec"
   char *cursorName;
 /*
  *   EXEC SQL END DECLARE SECTION;
  */
-#line 2893 "_informixdb.ec"
+#line 2925 "_informixdb.ec"
 
 
   oldsighandler = NULL;
@@ -3461,13 +3493,13 @@ static PyObject *Cursor_fetchone(Cursor *self)
 /*
  *     exec sql begin declare section;
  */
-#line 2912 "_informixdb.ec"
-#line 2913 "_informixdb.ec"
+#line 2944 "_informixdb.ec"
+#line 2945 "_informixdb.ec"
 int scroll_val;
 /*
  *     exec sql end declare section;
  */
-#line 2914 "_informixdb.ec"
+#line 2946 "_informixdb.ec"
 
     scroll_val = self->scroll_value;
     switch (self->pending_scroll) {
@@ -3475,52 +3507,52 @@ int scroll_val;
 /*
  *         EXEC SQL FETCH NEXT :cursorName USING DESCRIPTOR tdaOut;
  */
-#line 2918 "_informixdb.ec"
+#line 2950 "_informixdb.ec"
   {
-#line 2918 "_informixdb.ec"
+#line 2950 "_informixdb.ec"
   static _FetchSpec _FS0 = { 0, 1, 0 };
   sqli_curs_fetch(ESQLINTVERSION, sqli_curs_locate(ESQLINTVERSION, cursorName, 256), (ifx_sqlda_t *)0, tdaOut, (char *)0, &_FS0);
-#line 2918 "_informixdb.ec"
+#line 2950 "_informixdb.ec"
   }
         break;
       case 1:
 /*
  *         EXEC SQL FETCH ABSOLUTE :scroll_val :cursorName USING DESCRIPTOR tdaOut;
  */
-#line 2921 "_informixdb.ec"
+#line 2953 "_informixdb.ec"
   {
-#line 2921 "_informixdb.ec"
+#line 2953 "_informixdb.ec"
   static ifx_sqlvar_t _sqibind[] = 
     {
       { 102, sizeof(scroll_val), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-#line 2921 "_informixdb.ec"
+#line 2953 "_informixdb.ec"
     };
   static ifx_sqlda_t _SD0 = { 1, _sqibind, {0}, 1, 0 };
   static _FetchSpec _FS1 = { 0, 6, 0 };
-#line 2921 "_informixdb.ec"
+#line 2953 "_informixdb.ec"
   _sqibind[0].sqldata = (char *) &scroll_val;
   sqli_curs_fetch(ESQLINTVERSION, sqli_curs_locate(ESQLINTVERSION, cursorName, 256), &_SD0, tdaOut, (char *)0, &_FS1);
-#line 2921 "_informixdb.ec"
+#line 2953 "_informixdb.ec"
   }
         break;
       case 2:
 /*
  *         EXEC SQL FETCH RELATIVE :scroll_val :cursorName USING DESCRIPTOR tdaOut;
  */
-#line 2924 "_informixdb.ec"
+#line 2956 "_informixdb.ec"
   {
-#line 2924 "_informixdb.ec"
+#line 2956 "_informixdb.ec"
   static ifx_sqlvar_t _sqibind[] = 
     {
       { 102, sizeof(scroll_val), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-#line 2924 "_informixdb.ec"
+#line 2956 "_informixdb.ec"
     };
   static ifx_sqlda_t _SD0 = { 1, _sqibind, {0}, 1, 0 };
   static _FetchSpec _FS1 = { 0, 7, 0 };
-#line 2924 "_informixdb.ec"
+#line 2956 "_informixdb.ec"
   _sqibind[0].sqldata = (char *) &scroll_val;
   sqli_curs_fetch(ESQLINTVERSION, sqli_curs_locate(ESQLINTVERSION, cursorName, 256), &_SD0, tdaOut, (char *)0, &_FS1);
-#line 2924 "_informixdb.ec"
+#line 2956 "_informixdb.ec"
   }
         break;
     }
@@ -3531,12 +3563,12 @@ int scroll_val;
 /*
  *     EXEC SQL FETCH :cursorName USING DESCRIPTOR tdaOut;
  */
-#line 2931 "_informixdb.ec"
+#line 2963 "_informixdb.ec"
   {
-#line 2931 "_informixdb.ec"
+#line 2963 "_informixdb.ec"
   static _FetchSpec _FS0 = { 0, 1, 0 };
   sqli_curs_fetch(ESQLINTVERSION, sqli_curs_locate(ESQLINTVERSION, cursorName, 256), (ifx_sqlda_t *)0, tdaOut, (char *)0, &_FS0);
-#line 2931 "_informixdb.ec"
+#line 2963 "_informixdb.ec"
   }
   }
   if (self->sqlinterrupt) {
@@ -3629,24 +3661,24 @@ static PyObject* Cursor_scroll(Cursor *self, PyObject *args, PyObject *kwds)
 /*
  *     EXEC SQL BEGIN DECLARE SECTION;
  */
-#line 3020 "_informixdb.ec"
-#line 3021 "_informixdb.ec"
+#line 3052 "_informixdb.ec"
+#line 3053 "_informixdb.ec"
   char *cursorName;
 /*
  *     EXEC SQL END DECLARE SECTION;
  */
-#line 3022 "_informixdb.ec"
+#line 3054 "_informixdb.ec"
 
     cursorName = self->cursorName;
 /*
  *     EXEC SQL FETCH CURRENT :cursorName USING DESCRIPTOR tdaOut;
  */
-#line 3024 "_informixdb.ec"
+#line 3056 "_informixdb.ec"
   {
-#line 3024 "_informixdb.ec"
+#line 3056 "_informixdb.ec"
   static _FetchSpec _FS0 = { 0, 5, 0 };
   sqli_curs_fetch(ESQLINTVERSION, sqli_curs_locate(ESQLINTVERSION, cursorName, 256), (ifx_sqlda_t *)0, tdaOut, (char *)0, &_FS0);
-#line 3024 "_informixdb.ec"
+#line 3056 "_informixdb.ec"
   }
     error_handle(self->conn, self,
                  ExcNotSupportedError, dberror_value("scroll"));
@@ -3774,8 +3806,8 @@ static int Connection_init(Connection *self, PyObject *args, PyObject* kwds)
 /*
  *   EXEC SQL BEGIN DECLARE SECTION;
  */
-#line 3148 "_informixdb.ec"
-#line 3149 "_informixdb.ec"
+#line 3180 "_informixdb.ec"
+#line 3181 "_informixdb.ec"
   char *connectionName = NULL;
   char *connectionString = NULL;
 const   char *dbUser = NULL;
@@ -3789,7 +3821,7 @@ const   char *dbPass = NULL;
 /*
  *   EXEC SQL END DECLARE SECTION;
  */
-#line 3159 "_informixdb.ec"
+#line 3191 "_informixdb.ec"
 
   int autocommit = 0;
   int iVerMajor = 0;
@@ -3828,24 +3860,24 @@ const   char *dbPass = NULL;
 /*
  *     EXEC SQL CONNECT TO :connectionString AS :connectionName USER :dbUser USING :dbPass WITH CONCURRENT TRANSACTION;
  */
-#line 3194 "_informixdb.ec"
+#line 3226 "_informixdb.ec"
   {
-#line 3194 "_informixdb.ec"
+#line 3226 "_informixdb.ec"
   ifx_conn_t      *_sqiconn;
   _sqiconn = (ifx_conn_t *)ifx_alloc_conn_user(dbUser, dbPass);
   sqli_connect_open(ESQLINTVERSION, 0, connectionString, connectionName, _sqiconn, 1);
   ifx_free_conn_user(&_sqiconn);
-#line 3194 "_informixdb.ec"
+#line 3226 "_informixdb.ec"
   }
   } else {
 /*
  *     EXEC SQL CONNECT TO :connectionString AS :connectionName WITH CONCURRENT TRANSACTION;
  */
-#line 3196 "_informixdb.ec"
+#line 3228 "_informixdb.ec"
   {
-#line 3196 "_informixdb.ec"
+#line 3228 "_informixdb.ec"
   sqli_connect_open(ESQLINTVERSION, 0, connectionString, connectionName, (ifx_conn_t *)0, 1);
-#line 3196 "_informixdb.ec"
+#line 3228 "_informixdb.ec"
   }
   }
   Py_END_ALLOW_THREADS;
@@ -3866,11 +3898,11 @@ const   char *dbPass = NULL;
 /*
  *     EXEC SQL BEGIN WORK;
  */
-#line 3213 "_informixdb.ec"
+#line 3245 "_informixdb.ec"
   {
-#line 3213 "_informixdb.ec"
+#line 3245 "_informixdb.ec"
   sqli_trans_begin2((mint)1);
-#line 3213 "_informixdb.ec"
+#line 3245 "_informixdb.ec"
   }
     if (is_dberror(self, NULL, "BEGIN")) {
       return -1;
@@ -3888,17 +3920,17 @@ const   char *dbPass = NULL;
  *       INTO :server_type, :ver_major, :ver_minor, :ver_os, :ver_level
  *       FROM systables where tabid=1 ;
  */
-#line 3220 "_informixdb.ec"
+#line 3252 "_informixdb.ec"
   {
-#line 3227 "_informixdb.ec"
+#line 3259 "_informixdb.ec"
   static const char *sqlcmdtxt[] =
-#line 3227 "_informixdb.ec"
+#line 3259 "_informixdb.ec"
     {
-#line 3227 "_informixdb.ec"
+#line 3259 "_informixdb.ec"
     "SELECT dbinfo ( \"version\" , \"server-type\" ) , dbinfo ( \"version\" , \"major\" ) , dbinfo ( \"version\" , \"minor\" ) , dbinfo ( \"version\" , \"os\" ) , dbinfo ( \"version\" , \"level\" ) FROM systables where tabid = 1",
     0
     };
-#line 3227 "_informixdb.ec"
+#line 3259 "_informixdb.ec"
 static ifx_cursor_t _SQ0 = {0};
   static ifx_sqlvar_t _sqobind[] = 
     {
@@ -3907,21 +3939,21 @@ static ifx_cursor_t _SQ0 = {0};
       { 100, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
       { 100, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
       { 100, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-#line 3227 "_informixdb.ec"
+#line 3259 "_informixdb.ec"
     };
-#line 3227 "_informixdb.ec"
+#line 3259 "_informixdb.ec"
   _sqobind[0].sqldata = server_type;
-#line 3227 "_informixdb.ec"
+#line 3259 "_informixdb.ec"
   _sqobind[1].sqldata = ver_major;
-#line 3227 "_informixdb.ec"
+#line 3259 "_informixdb.ec"
   _sqobind[2].sqldata = ver_minor;
-#line 3227 "_informixdb.ec"
+#line 3259 "_informixdb.ec"
   _sqobind[3].sqldata = ver_os;
-#line 3227 "_informixdb.ec"
+#line 3259 "_informixdb.ec"
   _sqobind[4].sqldata = ver_level;
-#line 3227 "_informixdb.ec"
+#line 3259 "_informixdb.ec"
   sqli_slct(ESQLINTVERSION, &_SQ0,sqlcmdtxt,0,(ifx_sqlvar_t *)0,5,_sqobind,0,(ifx_literal_t *)0,(ifx_namelist_t *)0,0);
-#line 3227 "_informixdb.ec"
+#line 3259 "_informixdb.ec"
   }
 
   if (SQLCODE==0) {
@@ -3947,28 +3979,28 @@ static ifx_cursor_t _SQ0 = {0};
  *         INTO :version
  *         FROM systables where tabname = " VERSION";
  */
-#line 3246 "_informixdb.ec"
+#line 3278 "_informixdb.ec"
   {
-#line 3249 "_informixdb.ec"
+#line 3281 "_informixdb.ec"
   static const char *sqlcmdtxt[] =
-#line 3249 "_informixdb.ec"
+#line 3281 "_informixdb.ec"
     {
-#line 3249 "_informixdb.ec"
+#line 3281 "_informixdb.ec"
     "SELECT owner FROM systables where tabname = \" VERSION\"",
     0
     };
-#line 3249 "_informixdb.ec"
+#line 3281 "_informixdb.ec"
 static ifx_cursor_t _SQ0 = {0};
   static ifx_sqlvar_t _sqobind[] = 
     {
       { 100, 256, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-#line 3249 "_informixdb.ec"
+#line 3281 "_informixdb.ec"
     };
-#line 3249 "_informixdb.ec"
+#line 3281 "_informixdb.ec"
   _sqobind[0].sqldata = version;
-#line 3249 "_informixdb.ec"
+#line 3281 "_informixdb.ec"
   sqli_slct(ESQLINTVERSION, &_SQ0,sqlcmdtxt,0,(ifx_sqlvar_t *)0,1,_sqobind,0,(ifx_literal_t *)0,(ifx_namelist_t *)0,0);
-#line 3249 "_informixdb.ec"
+#line 3281 "_informixdb.ec"
   }
     _clip_char(version);
     self->dbms_name = PyUnicode_FromString("Unknown");
@@ -4003,11 +4035,11 @@ static int Connection_setautocommit(Connection *self, PyObject *value,
 /*
  *       EXEC SQL COMMIT WORK;
  */
-#line 3280 "_informixdb.ec"
+#line 3312 "_informixdb.ec"
   {
-#line 3280 "_informixdb.ec"
+#line 3312 "_informixdb.ec"
   sqli_trans_commit();
-#line 3280 "_informixdb.ec"
+#line 3312 "_informixdb.ec"
   }
       if (is_dberror(self, NULL, "COMMIT")) { return 1; }
     }
@@ -4015,11 +4047,11 @@ static int Connection_setautocommit(Connection *self, PyObject *value,
 /*
  *       EXEC SQL BEGIN WORK;
  */
-#line 3284 "_informixdb.ec"
+#line 3316 "_informixdb.ec"
   {
-#line 3284 "_informixdb.ec"
+#line 3316 "_informixdb.ec"
   sqli_trans_begin2((mint)1);
-#line 3284 "_informixdb.ec"
+#line 3316 "_informixdb.ec"
   }
       if (is_dberror(self, NULL, "BEGIN")) { return 1; }
     }
@@ -4038,7 +4070,6 @@ static PyObject* DatabaseError_init(PyObject* self, PyObject* args, PyObject* kw
   PyObject *sqlerrm;
 
 /*
-  printf("HERE");
   PyObject* objectsRepresentation = PyObject_Repr(args);
   const char* s = PyUnicode_AsUTF8(objectsRepresentation);
   printf("%s\n",s);
@@ -4164,8 +4195,8 @@ static PyObject* dberror_value(char *action)
 /*
  *   EXEC SQL BEGIN DECLARE SECTION;
  */
-#line 3425 "_informixdb.ec"
-#line 3426 "_informixdb.ec"
+#line 3456 "_informixdb.ec"
+#line 3457 "_informixdb.ec"
 int exc_count;
   char message[255];
 int messlen;
@@ -4174,7 +4205,7 @@ int i;
 /*
  *   EXEC SQL END DECLARE SECTION;
  */
-#line 3431 "_informixdb.ec"
+#line 3462 "_informixdb.ec"
 
 
   list = PyList_New(0);
@@ -4184,19 +4215,19 @@ int i;
 /*
  *   EXEC SQL get diagnostics :exc_count = NUMBER;
  */
-#line 3437 "_informixdb.ec"
+#line 3468 "_informixdb.ec"
   {
-#line 3437 "_informixdb.ec"
+#line 3468 "_informixdb.ec"
   static ifx_hostvar_t _SQhtab[] =
     {
       { 0, 1, 102, sizeof(exc_count), 0, 0, 0, 0 },
       { 0, 0, 0, 0, 0, 0, 0, 0 }
-#line 3437 "_informixdb.ec"
+#line 3468 "_informixdb.ec"
     };
   _SQhtab[0].hostaddr = (char *)&exc_count;
-#line 3437 "_informixdb.ec"
+#line 3468 "_informixdb.ec"
   sqli_diag_get(ESQLINTVERSION, _SQhtab, -1);
-#line 3437 "_informixdb.ec"
+#line 3468 "_informixdb.ec"
   }
 
   for (i = 1; i <= exc_count; ++i) {
@@ -4205,23 +4236,23 @@ int i;
  *     EXEC SQL get diagnostics exception :i :sqlstate = RETURNED_SQLSTATE,
  *                :message = MESSAGE_TEXT, :messlen = MESSAGE_LENGTH;
  */
-#line 3441 "_informixdb.ec"
+#line 3472 "_informixdb.ec"
   {
-#line 3442 "_informixdb.ec"
+#line 3473 "_informixdb.ec"
   static ifx_hostvar_t _SQhtab[] =
     {
       { 0, 3, 100, 6, 0, 0, 0, 0 },
       { 0, 6, 100, 255, 0, 0, 0, 0 },
       { 0, 7, 102, sizeof(messlen), 0, 0, 0, 0 },
       { 0, 0, 0, 0, 0, 0, 0, 0 }
-#line 3442 "_informixdb.ec"
+#line 3473 "_informixdb.ec"
     };
   _SQhtab[0].hostaddr = (sqlstate);
   _SQhtab[1].hostaddr = (message);
   _SQhtab[2].hostaddr = (char *)&messlen;
-#line 3442 "_informixdb.ec"
+#line 3473 "_informixdb.ec"
   sqli_diag_get(ESQLINTVERSION, _SQhtab, i);
-#line 3442 "_informixdb.ec"
+#line 3473 "_informixdb.ec"
   }
     if (messlen < 0 || messlen > (int)sizeof(message)) {
       /* skip on invalid message */
@@ -4608,7 +4639,7 @@ static PyMethodDef globalMethods[] = {
 /* 
  * $ifdef HAVE_ESQL9;
  */
-#line 3825 "_informixdb.ec"
+#line 3856 "_informixdb.ec"
 
 static int makeint8(PyObject *in, ifx_int8_t *out)
 {
@@ -5072,7 +5103,7 @@ static int Sblob_alter(Sblob *self, PyObject *value, void *closure)
 /* 
  * $endif;
  */
-#line 4285 "_informixdb.ec"
+#line 4316 "_informixdb.ec"
 
 
 PyDoc_STRVAR(_informixdb_doc,
@@ -5164,7 +5195,7 @@ init_informixdb(void)
 /* 
  * $ifdef HAVE_ESQL9;
  */
-#line 4373 "_informixdb.ec"
+#line 4404 "_informixdb.ec"
 
   Py_TYPE(&Sblob_type) = &PyType_Type;
   Sblob_type.tp_alloc = PyType_GenericAlloc;
@@ -5175,7 +5206,7 @@ init_informixdb(void)
 /* 
  * $endif;
  */
-#line 4380 "_informixdb.ec"
+#line 4411 "_informixdb.ec"
 
 
 #ifdef IFX_THREAD
@@ -5200,7 +5231,7 @@ init_informixdb(void)
 /* 
  * $ifdef HAVE_ESQL9;
  */
-#line 4401 "_informixdb.ec"
+#line 4432 "_informixdb.ec"
 
 #define ExposeIntConstant(x) PyModule_AddIntConstant(m, #x, x)
   ExposeIntConstant(SBLOB_TYPE_BLOB);
@@ -5237,7 +5268,7 @@ init_informixdb(void)
 /* 
  * $endif;
  */
-#line 4434 "_informixdb.ec"
+#line 4465 "_informixdb.ec"
 
 
   Py_INCREF(&Connection_type);
@@ -5285,4 +5316,4 @@ init_informixdb(void)
   return m;
 }
 
-#line 4479 "_informixdb.ec"
+#line 4510 "_informixdb.ec"
