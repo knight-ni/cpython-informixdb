@@ -12,7 +12,7 @@ coding = 'utf-8'
 def test():
     import informixdb
     conn = informixdb.connect('odbc_demodb@ol_gbasedbt10','gbasedbt','P@ssw0rd0LD')
-    conn.autocommit = 1  # WE NEED THIS FOR DDL TX COMMIT
+    conn.autocommit = 0  # WE NEED THIS FOR DDL TX COMMIT
     cursor = conn.cursor()
     cursor.execute("drop table if exists ifxdbtest;")
     stmt_list = ['create table ifxdbtest(']
@@ -26,7 +26,7 @@ def test():
     stmt_list.append(',uclob clob')
     stmt_list.append(',ubyte byte')
     stmt_list.append(',ublob blob')
-    stmt_list.append(',primary key (uid)')
+    #stmt_list.append(',primary key (uid)')
     stmt_list.append(') put ublob in (')
     stmt_list.append('sbdbs')
     stmt_list.append(');')
@@ -101,11 +101,19 @@ def test():
     params.append(ublob)
 
     cursor.prepare(stmt)
-    ret = cursor.execute(None,params)
-    # use cursor.executemany(None,data[row[],row[],...])
+    data = []
+    #ret = cursor.execute(None,params)
+    for i in range(100):
+        ret = cursor.execute(None,params)
+        #data.append(params)
+    #ret = cursor.executemany(None,data)
     # use cursor.callproc(func,param[1,2,3])
+    conn.commit()
     print('Rows Affected:' + str(ret))
-  
+    conn.close()
+    sys.exit(0)
+    
+"""
     stmt = "select * from ifxdbtest"
     cursor.execute(stmt)
     colno = len(cursor.description)
@@ -157,9 +165,9 @@ def test():
             else:
                 print(col)
     print("Row Count:"+str(len(ret)))
-    
     conn.close()
     sys.exit(0)
+"""
 
 if __name__ == '__main__':
     sys.stdout = io.TextIOWrapper(sys.stdout.detach(), encoding='utf-8')
