@@ -2198,6 +2198,7 @@ static PyObject *Cursor_executemany(Cursor *self,
     return NULL;
   if (op==Py_None)
     op = self->op;
+  
   paramiter = PyObject_GetIter(params);
   if (paramiter == NULL) {
     return NULL;
@@ -2209,6 +2210,7 @@ static PyObject *Cursor_executemany(Cursor *self,
   if (!do_prepare(self, op)) {
     return NULL;
   }
+
   useInsertCursor =
    (self->conn->has_commit&&!self->conn->autocommit&&self->stype==SQ_INSERT);
 

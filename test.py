@@ -6,6 +6,8 @@ import json
 import numpy as np
 import datetime
 import decimal
+from time import *
+import threading
 
 coding = 'utf-8'
 
@@ -59,6 +61,7 @@ def test():
     stmt_list.append(')')
     stmt = ''.join(stmt_list)
 
+    begin_time = time()
     print(stmt)
     params = []
    
@@ -102,13 +105,29 @@ def test():
 
     cursor.prepare(stmt)
     data = []
+    ts = []
     #ret = cursor.execute(None,params)
-    for i in range(100):
-        ret = cursor.execute(None,params)
-        #data.append(params)
-    #ret = cursor.executemany(None,data)
+    for i in range(1000):
+        #th = threading.Thread(target=cursor.execute,args=[None,params])
+        #s.append(th)
+        #ret = cursor.execute(None,params)
+        data.append(params)
+    end_time = time()
+    paratime = end_time - begin_time
+    print('paratime:',paratime)
+    begin_time = time()
+    #for t in ts:
+    #    t.start()
+    #    t.join()
+
+    #NOT AS  FAST AS ESQL FROM C, HAVE TO WORK WITH MULTITHREAD AND MULTI CONNECTION EXECUTEMANY
+    ret = cursor.executemany(None,data)
     # use cursor.callproc(func,param[1,2,3])
     conn.commit()
+    end_time = time()
+    exectime = end_time - begin_time
+    print('exectime:',exectime)
+    begin_time = time()
     print('Rows Affected:' + str(ret))
     conn.close()
     sys.exit(0)
