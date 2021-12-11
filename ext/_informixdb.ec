@@ -35,6 +35,7 @@
 #include "longobject.h"
 //#include "cobject.h"
 #include "object.h"
+#include <time.h>
 
 #ifndef Py_RETURN_NONE
 #define Py_RETURN_NONE return Py_INCREF(Py_None), Py_None
@@ -90,6 +91,13 @@ $endif;
 #define IFXDB_MT
 #endif
 #endif
+
+/* Time */
+void prtTm(const char *title){
+   time_t t;
+   time(&t);
+   printf("%s:%d\n",title, (int)t);
+}
 
 /* Python.h defines these in Python >= 2.3 */
 #ifndef PyDoc_STR
@@ -1706,6 +1714,11 @@ static int bindInput(Cursor *cur, PyObject *vars)
         int success;
         PyObject *item = PySequence_GetItem(vars, cur->parmIdx[i]);
   
+/*
+        PyObject* objectsRepresentation = PyObject_Repr(item);
+        const char* s = PyUnicode_AsUTF8(objectsRepresentation);
+        prtTm(s);
+*/
         success = (*ibindFcn(item))(var++, item);
         Py_DECREF(item);  /* PySequence_GetItem increments it */
         if (!success)

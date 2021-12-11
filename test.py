@@ -28,7 +28,7 @@ def test():
     stmt_list.append(',uclob clob')
     stmt_list.append(',ubyte byte')
     stmt_list.append(',ublob blob')
-    #stmt_list.append(',primary key (uid)')
+    stmt_list.append(',primary key (uid)')
     stmt_list.append(') put ublob in (')
     stmt_list.append('sbdbs')
     stmt_list.append(');')
@@ -106,12 +106,14 @@ def test():
     cursor.prepare(stmt)
     data = []
     ts = []
-    #ret = cursor.execute(None,params)
-    for i in range(1000):
+    ret = cursor.execute(None,params)
+
+    #BULK INSERT CAN ONLY WORK FAST WITHOUT ANY LOB/SLOB TYPE
+    #for i in range(10000):
         #th = threading.Thread(target=cursor.execute,args=[None,params])
         #s.append(th)
-        #ret = cursor.execute(None,params)
-        data.append(params)
+        #ret = cursor.execute(None,params)  # INSERT 10000 TIME ROW BY ROW ELASPED 2s
+        #data.append(params)
     end_time = time()
     paratime = end_time - begin_time
     print('paratime:',paratime)
@@ -120,9 +122,8 @@ def test():
     #    t.start()
     #    t.join()
 
-    #NOT AS  FAST AS ESQL FROM C, HAVE TO WORK WITH MULTITHREAD AND MULTI CONNECTION EXECUTEMANY
-    ret = cursor.executemany(None,data)
-    # use cursor.callproc(func,param[1,2,3])
+    #ret = cursor.executemany(None,data)  # INSERT 10000 ROWS IN BULK ELAPSED 0.8s
+    #use cursor.callproc(func,param[1,2,3])
     conn.commit()
     end_time = time()
     exectime = end_time - begin_time
