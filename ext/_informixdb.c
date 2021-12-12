@@ -4847,9 +4847,19 @@ static PyObject *Sblob_write(Sblob *self, PyObject *args, PyObject *kwargs)
         PyUnicode_FromString("Sblob is not open")))
       return NULL;
   }
+/*
+  PyObject* objectsRepresentation = PyObject_Repr(args);
+  const char* s = PyUnicode_AsUTF8(objectsRepresentation);
+*/
   if (!PyArg_ParseTupleAndKeywords(args, kwargs, "s#", kwdlist, &buf, &buflen))
     return NULL;
   if (setConnection(self->conn)) return NULL;
+
+  if(!buf) {
+     if(error_handle(self->conn, NULL, ExcInterfaceError,
+        PyUnicode_FromString("NULL content want write Sblob")))
+      return NULL;
+  }
   result = ifx_lo_write(self->lofd, buf, buflen, &err);
   if (result<0) {
     ret_on_dberror(self->conn, NULL, "ifx_lo_write");
@@ -5113,7 +5123,7 @@ static int Sblob_alter(Sblob *self, PyObject *value, void *closure)
 /* 
  * $endif;
  */
-#line 4326 "_informixdb.ec"
+#line 4336 "_informixdb.ec"
 
 
 PyDoc_STRVAR(_informixdb_doc,
@@ -5205,7 +5215,7 @@ init_informixdb(void)
 /* 
  * $ifdef HAVE_ESQL9;
  */
-#line 4414 "_informixdb.ec"
+#line 4424 "_informixdb.ec"
 
   Py_TYPE(&Sblob_type) = &PyType_Type;
   Sblob_type.tp_alloc = PyType_GenericAlloc;
@@ -5216,7 +5226,7 @@ init_informixdb(void)
 /* 
  * $endif;
  */
-#line 4421 "_informixdb.ec"
+#line 4431 "_informixdb.ec"
 
 
 #ifdef IFX_THREAD
@@ -5241,7 +5251,7 @@ init_informixdb(void)
 /* 
  * $ifdef HAVE_ESQL9;
  */
-#line 4442 "_informixdb.ec"
+#line 4452 "_informixdb.ec"
 
 #define ExposeIntConstant(x) PyModule_AddIntConstant(m, #x, x)
   ExposeIntConstant(SBLOB_TYPE_BLOB);
@@ -5278,7 +5288,7 @@ init_informixdb(void)
 /* 
  * $endif;
  */
-#line 4475 "_informixdb.ec"
+#line 4485 "_informixdb.ec"
 
 
   Py_INCREF(&Connection_type);
@@ -5326,4 +5336,4 @@ init_informixdb(void)
   return m;
 }
 
-#line 4520 "_informixdb.ec"
+#line 4530 "_informixdb.ec"

@@ -4060,9 +4060,19 @@ static PyObject *Sblob_write(Sblob *self, PyObject *args, PyObject *kwargs)
         PyUnicode_FromString("Sblob is not open")))
       return NULL;
   }
+/*
+  PyObject* objectsRepresentation = PyObject_Repr(args);
+  const char* s = PyUnicode_AsUTF8(objectsRepresentation);
+*/
   if (!PyArg_ParseTupleAndKeywords(args, kwargs, "s#", kwdlist, &buf, &buflen))
     return NULL;
   if (setConnection(self->conn)) return NULL;
+
+  if(!buf) {
+     if(error_handle(self->conn, NULL, ExcInterfaceError, 
+        PyUnicode_FromString("NULL content want write Sblob")))
+      return NULL;
+  }
   result = ifx_lo_write(self->lofd, buf, buflen, &err);
   if (result<0) {
     ret_on_dberror(self->conn, NULL, "ifx_lo_write");

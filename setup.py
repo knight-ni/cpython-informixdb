@@ -63,7 +63,7 @@ class build_ext(_build_ext):
 
         if self.esql_static:
             self.esql_parts.append('-static')
-        self.esql_parts.append('-O3')
+        self.esql_parts.append('-O2')
 
         # determine esql version
         driver_name = "INFORMIX-ESQL"

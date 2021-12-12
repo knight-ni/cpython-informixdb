@@ -3,6 +3,7 @@ import io
 import os
 import sys
 import json
+#import numpy as np
 import datetime
 import decimal
 from time import *
@@ -63,7 +64,6 @@ def test():
     begin_time = time()
     print(stmt)
     params = []
-    lobbuf_size=int(1024000)
    
     uid = int(666)
     params.append(uid)
@@ -88,13 +88,8 @@ def test():
     params.append(utext)
 
     uclob = conn.Sblob(1)   # DEFINED IN SOURCE FILE
-    with open('/etc/services', 'rb') as f:
-        while True:
-            t = f.read(lobbuf_size);
-            if(t):
-                uclob.write(t)
-            else:
-                break
+    with open('/etc/services', 'r') as f:
+        uclob.write(f.read())
     uclob.close()
     params.append(uclob)
 
@@ -104,12 +99,7 @@ def test():
 
     ublob = conn.Sblob(0)    # DEFINED IN SOURCE FILE
     with open('./cat.jpg', 'rb') as f:
-        while True:
-            t = f.read(lobbuf_size);
-            if(t):
-                ublob.write(t)
-            else:
-                break
+        ublob.write(f.read())
     ublob.close()
     params.append(ublob)
 
@@ -140,7 +130,10 @@ def test():
     print('exectime:',exectime)
     begin_time = time()
     print('Rows Affected:' + str(ret))
+    conn.close()
+    sys.exit(0)
     
+"""
     stmt = "select * from ifxdbtest"
     cursor.execute(stmt)
     colno = len(cursor.description)
@@ -158,6 +151,7 @@ def test():
 
     print('')
 
+    lobbuf_size=int(4096)
     for row in ret:
         for idx,col in enumerate(row):
             type = cursor.description[idx][1]
@@ -193,9 +187,9 @@ def test():
     print("Row Count:"+str(len(ret)))
     conn.close()
     sys.exit(0)
+"""
 
 if __name__ == '__main__':
     sys.stdout = io.TextIOWrapper(sys.stdout.detach(), encoding='utf-8')
     test()
-
 
