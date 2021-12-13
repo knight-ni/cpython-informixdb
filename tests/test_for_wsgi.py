@@ -1,15 +1,22 @@
+#!/usr/local/python3/bin/python3.9
 # -*- coding: utf-8 -*-
 import io
 import os
 import sys
 import json
-#import numpy as np
 import datetime
 import decimal
 from time import *
-import threading
+import cgi
+import cgitb
 
 coding = 'utf-8'
+cgitb.enable()
+
+os.environ['GBASEDBTDIR'] = '/opt/GBASE/gbase'
+os.environ['GBASEDBTSERVER'] = 'ol_gbasedbt10'
+os.environ['GBASEDBTSQLHOSTS'] = '/opt/GBASE/gbase/etc/sqlhosts.ol_gbasedbt10'
+
 
 def test():
     import informixdb
@@ -33,7 +40,11 @@ def test():
     stmt_list.append('sbdbs')
     stmt_list.append(');')
     stmt = ''.join(stmt_list)
+    print('<tr>')
+    print('<th colspan="5">')
     print(stmt)
+    print('</th>')
+    print('</tr>')
     cursor.execute(stmt)
 
     stmt_list = ['insert into ifxdbtest(']
@@ -62,8 +73,13 @@ def test():
     stmt = ''.join(stmt_list)
 
     begin_time = time()
+    print('<tr>')
+    print('<th colspan="5">')
     print(stmt)
+    print('</th>')
+    print('</tr>')
     params = []
+    lobbuf_size=int(1024000)
    
     uid = int(666)
     params.append(uid)
@@ -88,8 +104,13 @@ def test():
     params.append(utext)
 
     uclob = conn.Sblob(1)   # DEFINED IN SOURCE FILE
-    with open('/etc/services', 'r') as f:
-        uclob.write(f.read())
+    with open('/etc/services', 'rb') as f:
+        while True:
+            t = f.read(lobbuf_size);
+            if(t):
+                uclob.write(t)
+            else:
+                break
     uclob.close()
     params.append(uclob)
 
@@ -99,7 +120,12 @@ def test():
 
     ublob = conn.Sblob(0)    # DEFINED IN SOURCE FILE
     with open('./cat.jpg', 'rb') as f:
-        ublob.write(f.read())
+        while True:
+            t = f.read(lobbuf_size);
+            if(t):
+                ublob.write(t)
+            else:
+                break
     ublob.close()
     params.append(ublob)
 
@@ -116,7 +142,11 @@ def test():
         #data.append(params)
     end_time = time()
     paratime = end_time - begin_time
+    print('<tr>')
+    print('<th colspan="5">')
     print('paratime:',paratime)
+    print('</th>')
+    print('</tr>')
     begin_time = time()
     #for t in ts:
     #    t.start()
@@ -127,31 +157,54 @@ def test():
     conn.commit()
     end_time = time()
     exectime = end_time - begin_time
+    print('<tr>')
+    print('<th colspan="5">')
     print('exectime:',exectime)
+    print('</th>')
+    print('</tr>')
     begin_time = time()
+    print('<tr>')
+    print('<th colspan="5">')
     print('Rows Affected:' + str(ret))
-    conn.close()
-    sys.exit(0)
+    print('</th>')
+    print('</tr>')
+    print('</tr>')
     
-"""
     stmt = "select * from ifxdbtest"
     cursor.execute(stmt)
     colno = len(cursor.description)
+    print('<tr>')
+    print('<th colspan="5">')
     print('Column Number:' + str(colno))
-    print('')
+    print('</th>')
+    print('</tr>')
 
+    print('<tr>')
     for r in cursor.description:
+        print('<th>')
         print("Name:" + r[0] + "\t", end='')
+        print('</th>')
+        print('<th>')
         print("Type:" + r[1] + "\t", end='')
+        print('</th>')
+        print('<th>')
         print("Xid:" + str(r[2]) + "\t", end='')
+        print('</th>')
+        print('<th>')
         print("Length:" + str(r[3]) + "\t", end='')
+        print('</th>')
+        print('<th>')
         print("Nullable:" + str(r[6]))
+        print('</th>')
+        print('</tr>')
     ret = cursor.fetchall()
     # use fetchone or fetchmany(N) as need
 
-    print('')
+    print('<tr>')
+    print('<th colspan="5" rowspan="1" height="20">')
+    print('</th>')
+    print('</tr>')
 
-    lobbuf_size=int(4096)
     for row in ret:
         for idx,col in enumerate(row):
             type = cursor.description[idx][1]
@@ -183,13 +236,26 @@ def test():
                             break
                 col.close()
             else:
+                print('<tr>')
+                print('<th colspan="5">')
                 print(col)
+                print('</th>')
+                print('</tr>')
+    print('<tr>')
+    print('<th colspan="5">')
     print("Row Count:"+str(len(ret)))
+    print('</th>')
+    print('</tr>')
     conn.close()
     sys.exit(0)
-"""
 
 if __name__ == '__main__':
     sys.stdout = io.TextIOWrapper(sys.stdout.detach(), encoding='utf-8')
+    print('Content-type:text/html\r\n\r\n')
+    print('<html><body>')
+    print('<table border="1">')
     test()
+    print('</table>')
+    print('</body></html>')
+
 
